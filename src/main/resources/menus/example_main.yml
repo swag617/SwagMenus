@@ -1,0 +1,131 @@
+# =====================================================
+# SwagMenus — Example Main Menu
+# =====================================================
+# This menu demonstrates the core features of SwagMenus.
+# Open it with: /sm open example_main
+# Or register a command with 'open_command' below.
+
+menu_title: "&8&lSwagMenus &7— &6Main Menu"
+menu_size: 54
+
+# Register a custom command to open this menu.
+# Players can type /mainmenu or /mm to open it.
+open_command: mainmenu
+open_commands:
+  - mainmenu
+  - mm
+
+# Auto-refresh every 60 ticks (3 seconds) — useful if items show live placeholders.
+update_interval: 60
+
+# =====================================================
+# Fill Item — Fills all empty slots with this item.
+# =====================================================
+fill_item:
+  material: GRAY_STAINED_GLASS_PANE
+  display_name: " "
+  hide_flags: true
+
+# =====================================================
+# Items
+# =====================================================
+items:
+
+  # --- Player Head (your own skull) ---
+  player_head:
+    material: PLAYER_HEAD
+    slot: 4
+    skull_owner: "%player_name%"
+    display_name: "&e%player_name%"
+    lore:
+      - ""
+      - "&7Health: &c%player_health%"
+      - "&7Food: &a%player_food_level%"
+      - "&7Level: &b%player_level%"
+      - "&7World: &d%player_world%"
+      - ""
+      - "&8Click to do nothing (it's just info!)"
+    hide_flags: true
+
+  # --- Server Selector shortcut ---
+  server_selector:
+    material: COMPASS
+    slot: 20
+    display_name: "&bServer Selector"
+    lore:
+      - ""
+      - "&7Browse available servers"
+      - "&7and jump between them."
+      - ""
+      - "&eLeft-click to open!"
+    glow: true
+    hide_flags: true
+    left_click_commands:
+      - "[open] example_server_selector"
+
+  # --- A permission-gated item ---
+  admin_panel:
+    material: COMMAND_BLOCK
+    slot: 22
+    display_name: "&cAdmin Panel"
+    lore:
+      - ""
+      - "&7Manage the server with"
+      - "&7powerful admin tools."
+      - ""
+      - "&eLeft-click to open!"
+    glow: true
+    hide_flags: true
+    view_requirement:
+      requirements:
+        needs_admin:
+          type: has_permission
+          permission: "swagmenus.admin"
+      deny_commands:
+        - "[message] &cYou don't have permission to see the admin panel."
+    left_click_commands:
+      - "[message] &aAdmin panel coming soon!"
+      - "[sound] ENTITY_EXPERIENCE_ORB_PICKUP"
+
+  # --- Teleport to spawn ---
+  spawn_tp:
+    material: RED_BED
+    slot: 24
+    display_name: "&aReturn to Spawn"
+    lore:
+      - ""
+      - "&7Teleport back to the"
+      - "&7server spawn point."
+      - ""
+      - "&eLeft-click to teleport!"
+    hide_flags: true
+    left_click_commands:
+      - "[close]"
+      - "[player] spawn"
+      - "[sound] ENTITY_ENDERMAN_TELEPORT"
+      - "[title] &aWelcome Back!;&7You teleported to spawn."
+
+  # --- Multi-slot decorative border ---
+  # Top and bottom border rows
+  border_top:
+    material: BLACK_STAINED_GLASS_PANE
+    slots: [0, 1, 2, 3, 5, 6, 7, 8]
+    display_name: " "
+    hide_flags: true
+
+  border_bottom:
+    material: BLACK_STAINED_GLASS_PANE
+    slots: [45, 46, 47, 48, 49, 50, 51, 52, 53]
+    display_name: " "
+    hide_flags: true
+
+  # --- Close button ---
+  close_button:
+    material: BARRIER
+    slot: 49
+    display_name: "&cClose"
+    lore:
+      - "&7Click to close this menu."
+    hide_flags: true
+    left_click_commands:
+      - "[close]"

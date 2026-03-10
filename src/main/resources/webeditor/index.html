@@ -1,0 +1,1611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SwagMenus Web Editor</title>
+<style>
+  /* ---- Reset & Base ---- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg-0: #0f1117;
+    --bg-1: #181c27;
+    --bg-2: #1e2333;
+    --bg-3: #252b3b;
+    --bg-4: #2d3347;
+    --accent: #5865f2;
+    --accent-h: #4752c4;
+    --green: #3ba55d;
+    --red: #ed4245;
+    --yellow: #faa61a;
+    --text-0: #e3e5e8;
+    --text-1: #b9bbbe;
+    --text-2: #72767d;
+    --border: #3a3f52;
+    --radius: 8px;
+    --radius-sm: 4px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    --transition: 0.15s ease;
+  }
+  html, body { height: 100%; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; background: var(--bg-0); color: var(--text-0); overflow: hidden; }
+
+  /* ---- Scrollbar ---- */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-1); }
+  ::-webkit-scrollbar-thumb { background: var(--bg-4); border-radius: 3px; }
+
+  /* ---- Layout ---- */
+  #app { display: grid; grid-template-rows: 52px 1fr; grid-template-columns: 220px 1fr 300px; height: 100vh; }
+  #topbar { grid-column: 1 / -1; background: var(--bg-1); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 10; }
+  #sidebar { background: var(--bg-1); border-right: 1px solid var(--border); overflow-y: auto; display: flex; flex-direction: column; }
+  #main { background: var(--bg-0); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  #panel { background: var(--bg-1); border-left: 1px solid var(--border); overflow-y: auto; padding: 0; }
+
+  /* ---- Topbar ---- */
+  .topbar-logo { font-weight: 700; font-size: 16px; color: var(--accent); margin-right: 8px; letter-spacing: 0.5px; }
+  .topbar-sep { width: 1px; height: 28px; background: var(--border); }
+  .topbar-label { color: var(--text-2); font-size: 12px; white-space: nowrap; }
+  #inp-title { flex: 1; min-width: 120px; max-width: 260px; }
+  #sel-size { width: 90px; }
+  #inp-cmd { flex: 1; min-width: 100px; max-width: 220px; }
+  #inp-interval { width: 80px; }
+  .topbar-spacer { flex: 1; }
+  #btn-save { background: var(--green); color: #fff; padding: 7px 20px; border-radius: var(--radius-sm); font-weight: 600; }
+  #btn-save:hover { filter: brightness(1.15); }
+  #status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--red); flex-shrink: 0; }
+  #status-dot.ok { background: var(--green); }
+  #status-label { font-size: 12px; color: var(--text-2); }
+
+  /* ---- Sidebar ---- */
+  .sidebar-header { padding: 12px 12px 8px; font-size: 11px; font-weight: 700; color: var(--text-2); letter-spacing: 0.8px; text-transform: uppercase; display: flex; align-items: center; justify-content: space-between; }
+  #btn-new-menu { background: var(--accent); color: #fff; padding: 4px 10px; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; }
+  #btn-new-menu:hover { background: var(--accent-h); }
+  .menu-item { padding: 8px 12px; cursor: pointer; border-radius: var(--radius-sm); margin: 1px 6px; display: flex; align-items: center; gap: 8px; transition: background var(--transition); }
+  .menu-item:hover { background: var(--bg-3); }
+  .menu-item.active { background: var(--bg-4); color: var(--text-0); }
+  .menu-item-icon { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
+  .menu-item-name { font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sidebar-footer { padding: 10px 12px; border-top: 1px solid var(--border); margin-top: auto; }
+  #btn-delete-menu { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; width: 100%; }
+  #btn-delete-menu:hover { background: var(--red); color: #fff; }
+
+  /* ---- Main area ---- */
+  .section-title { font-size: 11px; font-weight: 700; color: var(--text-2); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 10px; }
+  #grid-container { background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+  #slot-grid { display: grid; gap: 4px; }
+  .slot { width: 80px; height: 80px; background: var(--bg-3); border: 2px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 4px; transition: border-color var(--transition), background var(--transition); position: relative; overflow: hidden; }
+  .slot:hover { border-color: var(--accent); background: var(--bg-4); }
+  .slot.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(88,101,242,0.4); }
+  .slot.filled { background: var(--bg-2); }
+  .slot-num { position: absolute; top: 2px; left: 4px; font-size: 9px; color: var(--text-2); line-height: 1; }
+  .slot-mat { font-size: 7px; color: var(--text-1); line-height: 1.2; word-break: break-all; margin-top: 2px; }
+  .slot-name { font-size: 8px; line-height: 1.2; margin-top: 1px; word-break: break-all; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .slot-icon { width: 42px; height: 42px; image-rendering: pixelated; object-fit: contain; }
+  .slot-badge { width: 42px; height: 42px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+
+  /* ---- Right panel ---- */
+  .panel-header { padding: 14px 16px 10px; font-size: 13px; font-weight: 600; color: var(--text-0); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .panel-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 12px; }
+  .field-group { display: flex; flex-direction: column; gap: 4px; }
+  .field-label { font-size: 11px; font-weight: 600; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-hint { font-size: 10px; color: var(--text-2); margin-top: 2px; }
+  .color-preview { padding: 6px 8px; border-radius: var(--radius-sm); background: var(--bg-3); font-size: 12px; margin-top: 4px; min-height: 26px; word-break: break-word; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; }
+  .checkbox-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+  .checkbox-row label { font-size: 13px; cursor: pointer; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .panel-section { border-top: 1px solid var(--border); padding-top: 12px; }
+  .panel-section-title { font-size: 11px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  #btn-apply-item { background: var(--accent); color: #fff; padding: 8px; border-radius: var(--radius-sm); font-weight: 600; width: 100%; }
+  #btn-apply-item:hover { background: var(--accent-h); }
+  #btn-delete-item { background: transparent; color: var(--red); border: 1px solid var(--red); padding: 8px; border-radius: var(--radius-sm); font-weight: 600; width: 100%; }
+  #btn-delete-item:hover { background: var(--red); color: #fff; }
+  #panel-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-2); gap: 8px; padding: 40px 20px; text-align: center; }
+  #panel-empty svg { opacity: 0.3; }
+
+  /* ---- Form controls ---- */
+  input[type=text], input[type=number], select, textarea {
+    background: var(--bg-3); border: 1px solid var(--border); color: var(--text-0);
+    border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px; font-family: inherit;
+    width: 100%; outline: none; transition: border-color var(--transition);
+  }
+  input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+  select option { background: var(--bg-3); }
+  button { border: none; cursor: pointer; font-family: inherit; font-size: 13px; transition: all var(--transition); border-radius: var(--radius-sm); }
+
+  /* ---- Toast ---- */
+  #toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 1000; pointer-events: none; }
+  .toast { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 16px; font-size: 13px; color: var(--text-0); box-shadow: var(--shadow); animation: slideIn 0.2s ease; max-width: 320px; }
+  .toast.success { border-left: 3px solid var(--green); }
+  .toast.error { border-left: 3px solid var(--red); }
+  .toast.info { border-left: 3px solid var(--accent); }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateY(8px); } }
+
+  /* ---- Modal ---- */
+  #modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; display: none; align-items: center; justify-content: center; }
+  #modal-overlay.open { display: flex; }
+  .modal { background: var(--bg-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 360px; box-shadow: var(--shadow); }
+  .modal h3 { font-size: 15px; margin-bottom: 12px; }
+  .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+  .btn-cancel { background: var(--bg-4); color: var(--text-1); padding: 7px 16px; border-radius: var(--radius-sm); }
+  .btn-confirm { background: var(--accent); color: #fff; padding: 7px 16px; border-radius: var(--radius-sm); font-weight: 600; }
+  .btn-confirm-red { background: var(--red); color: #fff; padding: 7px 16px; border-radius: var(--radius-sm); font-weight: 600; }
+
+  /* ---- No menu selected ---- */
+  #no-menu { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-2); gap: 12px; }
+  #no-menu h2 { font-size: 18px; color: var(--text-1); }
+
+  /* ---- Drag and drop ---- */
+  .slot.drag-over { border-color: var(--yellow); background: var(--bg-4); box-shadow: 0 0 0 2px rgba(250,166,26,0.4); }
+
+  /* ---- Material category colors ---- */
+  .mat-tool    { background: #2c4a7c; }
+  .mat-block   { background: #2a5c3a; }
+  .mat-food    { background: #6b4c18; }
+  .mat-armor   { background: #4c3a6b; }
+  .mat-weapon  { background: #6b2a2a; }
+  .mat-misc    { background: #3a3a3a; }
+  .mat-nature  { background: #2a5c2a; }
+  .mat-special { background: #5c4a1c; }
+</style>
+</head>
+<body>
+
+<div id="login-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
+  <div style="background:var(--bg-1); border:1px solid var(--border); border-radius:var(--radius); padding:36px 40px; width:340px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:16px;">
+    <div style="font-size:22px; font-weight:700; color:var(--accent); text-align:center;">SwagMenus</div>
+    <div style="font-size:13px; color:var(--text-1); text-align:center;">Enter your web editor password</div>
+    <input id="login-password" type="password" placeholder="Password" style="width:100%; padding:10px 12px; background:var(--bg-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-0); font-size:14px;"
+      onkeydown="if(event.key==='Enter') doLogin()">
+    <div id="login-error" style="color:var(--red); font-size:12px; min-height:16px; text-align:center;"></div>
+    <button id="login-btn" onclick="doLogin()" style="background:var(--accent); color:#fff; padding:10px; border-radius:var(--radius-sm); font-size:14px; font-weight:600; width:100%;">Login</button>
+    <div style="font-size:11px; color:var(--text-2); text-align:center;">Change password in <code>config.yml → web_editor.password</code></div>
+  </div>
+</div>
+
+<div id="app">
+
+  <!-- Top bar -->
+  <header id="topbar">
+    <span class="topbar-logo">SwagMenus</span>
+    <div class="topbar-sep"></div>
+    <span class="topbar-label">Title</span>
+    <input id="inp-title" type="text" placeholder="&8My Menu" title="Menu title (supports & color codes)">
+    <span class="topbar-label">Size</span>
+    <select id="sel-size">
+      <option value="9">9 (1 row)</option>
+      <option value="18">18 (2 rows)</option>
+      <option value="27">27 (3 rows)</option>
+      <option value="36">36 (4 rows)</option>
+      <option value="45">45 (5 rows)</option>
+      <option value="54" selected>54 (6 rows)</option>
+    </select>
+    <span class="topbar-label">Command</span>
+    <input id="inp-cmd" type="text" placeholder="mymenu" title="Open command(s), comma-separated">
+    <span class="topbar-label">Update (ticks)</span>
+    <input id="inp-interval" type="number" min="0" value="0" title="Auto-refresh interval in ticks (0 = off)">
+    <div class="topbar-spacer"></div>
+    <button id="btn-undo" title="Undo (Ctrl+Z)" style="background:transparent;color:var(--text-1);border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius-sm);font-size:14px;" disabled>&#8617;</button>
+    <button id="btn-redo" title="Redo (Ctrl+Shift+Z)" style="background:transparent;color:var(--text-1);border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius-sm);font-size:14px;" disabled>&#8618;</button>
+    <div class="topbar-sep"></div>
+    <div id="status-dot"></div>
+    <span id="status-label">Disconnected</span>
+    <button id="btn-save">Save</button>
+  </header>
+
+  <!-- Sidebar -->
+  <aside id="sidebar">
+    <div class="sidebar-header">
+      Menus
+      <button id="btn-new-menu">+ New</button>
+    </div>
+    <div id="menu-list"></div>
+    <div class="sidebar-footer">
+      <button id="btn-delete-menu">Delete Menu</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main id="main">
+    <div id="no-menu">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <h2>No menu selected</h2>
+      <p>Select a menu from the sidebar or create a new one.</p>
+    </div>
+    <div id="grid-wrap" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="section-title" style="margin-bottom:0">Slot Grid</div>
+        <button id="btn-fill-item" style="background:transparent;color:var(--accent);border:1px solid var(--accent);padding:5px 14px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;">Fill Item</button>
+      </div>
+      <div id="grid-container">
+        <div id="slot-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Right panel -->
+  <aside id="panel">
+    <div id="panel-empty">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 5v14M5 12h14"/></svg>
+      <p>Click a slot to edit its item</p>
+    </div>
+    <div id="panel-editor" style="display:none">
+      <div class="panel-header">
+        <span id="panel-slot-label">Slot 0</span>
+        <div style="display:flex;gap:6px">
+          <button id="btn-clear-fill-item" style="display:none;width:auto;padding:4px 10px;font-size:12px;background:transparent;color:var(--red);border:1px solid var(--red);">Clear</button>
+          <button id="btn-delete-item" style="width:auto;padding:4px 10px;font-size:12px;">Remove</button>
+        </div>
+      </div>
+      <div class="panel-body">
+
+        <div class="field-group">
+          <label class="field-label">Material</label>
+          <input id="inp-material" type="text" list="material-list" placeholder="STONE">
+          <datalist id="material-list"></datalist>
+        </div>
+
+        <div class="two-col" id="slots-row">
+          <div class="field-group">
+            <label class="field-label">Slot(s)</label>
+            <input id="inp-slots" type="text" placeholder="0" title="Comma-separated slot numbers">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Amount</label>
+            <input id="inp-amount" type="number" min="1" max="64" value="1">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Display Name</label>
+          <input id="inp-name" type="text" placeholder="&aItem Name">
+          <div class="color-preview" id="preview-name"></div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Lore</label>
+          <textarea id="inp-lore" placeholder="&7One line per lore line" rows="3"></textarea>
+          <div class="color-preview" id="preview-lore" style="white-space:pre-wrap"></div>
+        </div>
+
+        <div class="two-col">
+          <div class="checkbox-row">
+            <input type="checkbox" id="chk-glow">
+            <label for="chk-glow">Glow</label>
+          </div>
+          <div class="checkbox-row">
+            <input type="checkbox" id="chk-hide">
+            <label for="chk-hide">Hide Flags</label>
+          </div>
+        </div>
+
+        <div class="field-group" id="skull-group" style="display:none">
+          <label class="field-label">Skull Owner</label>
+          <input id="inp-skull" type="text" placeholder="PlayerName or %placeholder%">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Custom Model Data</label>
+          <input id="inp-cmd-data" type="number" min="0" value="0">
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Click Commands</div>
+
+          <div class="field-group" style="background:var(--bg-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 10px;gap:6px">
+            <label class="field-label" style="color:var(--accent)">Open GUI</label>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="sel-open-gui" style="flex:1">
+                <option value="">— select a menu —</option>
+              </select>
+              <select id="sel-open-gui-click" style="width:110px">
+                <option value="lc">Left Click</option>
+                <option value="rc">Right Click</option>
+                <option value="slc">Shift Left</option>
+                <option value="src">Shift Right</option>
+                <option value="mc">Middle Click</option>
+              </select>
+              <button id="btn-open-gui-add" style="background:var(--accent);color:#fff;padding:6px 12px;white-space:nowrap">Add</button>
+            </div>
+            <div style="font-size:10px;color:var(--text-2)">Appends <code style="color:var(--text-1)">[open] menu_name</code> to the selected click commands box.</div>
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Left Click</label>
+            <textarea id="inp-lc" placeholder="[player] hello world" rows="2"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Right Click</label>
+            <textarea id="inp-rc" placeholder="[console] give %player_name% diamond 1" rows="2"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Shift Left Click</label>
+            <textarea id="inp-slc" rows="2"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Shift Right Click</label>
+            <textarea id="inp-src" rows="2"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Middle Click</label>
+            <textarea id="inp-mc" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">View Requirement</div>
+          <div class="field-group">
+            <label class="field-label">Type</label>
+            <select id="inp-req-type">
+              <option value="">(none)</option>
+              <option value="has_permission">has_permission</option>
+              <option value="has_money">has_money</option>
+              <option value="string_equals">string_equals</option>
+              <option value="string_contains">string_contains</option>
+              <option value="regex_matches">regex_matches</option>
+              <option value="javascript">javascript</option>
+            </select>
+          </div>
+          <div class="field-group" id="req-input-group" style="display:none">
+            <label class="field-label" id="req-input-label">Value</label>
+            <input id="inp-req-value" type="text" placeholder="">
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <button id="btn-apply-item">Apply to Slot</button>
+        </div>
+
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Modal -->
+<div id="modal-overlay">
+  <div class="modal">
+    <h3 id="modal-title">Confirm</h3>
+    <div id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Cancel</button>
+      <button class="btn-confirm" id="modal-confirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// Config
+// ============================================================
+const API = '/api';
+let AUTH_TOKEN = sessionStorage.getItem('swagmenus_token') || '';
+
+// ============================================================
+// State
+// ============================================================
+let state = {
+  menus: [],           // list of menu names
+  currentMenu: null,   // name string
+  menuData: null,      // raw JSON object from API
+  items: {},           // slot -> item object (our working copy)
+  selectedSlot: null,
+  materials: [],
+  sounds: [],
+  connected: false,
+};
+
+// ============================================================
+// Color parser — &codes and &#RRGGBB
+// ============================================================
+const COLOR_MAP = {
+  '0':'#000000','1':'#0000aa','2':'#00aa00','3':'#00aaaa',
+  '4':'#aa0000','5':'#aa00aa','6':'#ffaa00','7':'#aaaaaa',
+  '8':'#555555','9':'#5555ff','a':'#55ff55','b':'#55ffff',
+  'c':'#ff5555','d':'#ff55ff','e':'#ffff55','f':'#ffffff',
+};
+const FORMAT_MAP = { 'l':'bold','m':'line-through','n':'underline','o':'italic' };
+
+function parseColors(raw) {
+  if (!raw) return '';
+  const out = [];
+  let i = 0;
+  let styles = { color: null, bold: false, italic: false, underline: false, strikethrough: false };
+
+  function flushStyles(text) {
+    if (!text) return '';
+    const css = [];
+    if (styles.color) css.push(`color:${styles.color}`);
+    if (styles.bold) css.push('font-weight:bold');
+    if (styles.italic) css.push('font-style:italic');
+    const decs = [];
+    if (styles.underline) decs.push('underline');
+    if (styles.strikethrough) decs.push('line-through');
+    if (decs.length) css.push(`text-decoration:${decs.join(' ')}`);
+    const esc = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return css.length ? `<span style="${css.join(';')}">${esc}</span>` : esc;
+  }
+
+  let buf = '';
+  while (i < raw.length) {
+    if (raw[i] === '&') {
+      // hex &#RRGGBB
+      if (raw[i+1] === '#' && i + 7 < raw.length) {
+        const hex = raw.slice(i+2, i+8);
+        if (/^[0-9a-fA-F]{6}$/.test(hex)) {
+          out.push(flushStyles(buf)); buf = '';
+          styles = { ...styles, color: '#' + hex };
+          i += 8; continue;
+        }
+      }
+      const code = raw[i+1] ? raw[i+1].toLowerCase() : '';
+      if (COLOR_MAP[code]) {
+        out.push(flushStyles(buf)); buf = '';
+        styles = { color: COLOR_MAP[code], bold: false, italic: false, underline: false, strikethrough: false };
+        i += 2; continue;
+      }
+      if (FORMAT_MAP[code]) {
+        out.push(flushStyles(buf)); buf = '';
+        const fmt = FORMAT_MAP[code];
+        if (fmt === 'bold') styles.bold = true;
+        else if (fmt === 'italic') styles.italic = true;
+        else if (fmt === 'underline') styles.underline = true;
+        else if (fmt === 'line-through') styles.strikethrough = true;
+        i += 2; continue;
+      }
+      if (code === 'r') {
+        out.push(flushStyles(buf)); buf = '';
+        styles = { color: null, bold: false, italic: false, underline: false, strikethrough: false };
+        i += 2; continue;
+      }
+    }
+    buf += raw[i++];
+  }
+  out.push(flushStyles(buf));
+  return out.join('');
+}
+
+// ============================================================
+// Material category badge color
+// ============================================================
+const MAT_CATEGORIES = [
+  { pattern: /SWORD|AXE|BOW|CROSSBOW|TRIDENT|MACE/,  cls: 'mat-weapon' },
+  { pattern: /PICKAXE|SHOVEL|HOE|SHEARS|FLINT_AND_STEEL/, cls: 'mat-tool' },
+  { pattern: /HELMET|CHESTPLATE|LEGGINGS|BOOTS|ELYTRA/, cls: 'mat-armor' },
+  { pattern: /APPLE|BREAD|BEEF|PORK|CHICKEN|MUTTON|CARROT|POTATO|MELON|CAKE|COOKIE|PIE|SOUP|STEW|RABBIT|COD|SALMON|TROPICAL|PUFFERFISH|MUSHROOM|HONEY|BERRY|KELP/, cls: 'mat-food' },
+  { pattern: /LOG|WOOD|PLANK|SAPLING|LEAVE|OAK|SPRUCE|BIRCH|JUNGLE|ACACIA|DARK_OAK|MANGROVE|CHERRY|BAMBOO|WARPED|CRIMSON|GRASS|DIRT|SAND|GRAVEL|STONE|COBBLE|BRICK|CONCRETE|TERRACOTTA|WOOL|GLASS/, cls: 'mat-block' },
+  { pattern: /ROSE|FLOWER|TULIP|LILY|DANDELION|POPPY|FERN|VINE|MUSHROOM|CACTUS|SUGAR|WHEAT|PUMPKIN/, cls: 'mat-nature' },
+  { pattern: /GOLDEN|DIAMOND|NETHERITE|EMERALD|RUBY|AMETHYST|LAPIS|COPPER|IRON|GOLD/, cls: 'mat-special' },
+];
+function matClass(name) {
+  for (const cat of MAT_CATEGORIES) {
+    if (cat.pattern.test(name)) return cat.cls;
+  }
+  return 'mat-misc';
+}
+function matAbbrev(name) {
+  // Short 2-letter abbrev for the badge
+  const words = name.split('_');
+  if (words.length === 1) return name.slice(0, 2);
+  return words.map(w => w[0]).join('').slice(0, 3);
+}
+
+// ============================================================
+// API helpers
+// ============================================================
+async function apiFetch(path, opts = {}) {
+  const headers = { 'X-Auth-Token': AUTH_TOKEN, ...(opts.headers || {}) };
+  if (opts.body && typeof opts.body === 'object') {
+    headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(opts.body);
+  }
+  const res = await fetch(API + path, { ...opts, headers });
+  return res;
+}
+
+async function apiGet(path) {
+  const res = await apiFetch(path);
+  if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`);
+  return res.json();
+}
+
+async function apiPost(path, body) {
+  const res = await apiFetch(path, { method: 'POST', body });
+  return res;
+}
+
+async function apiPut(path, body) {
+  const res = await apiFetch(path, { method: 'PUT', body });
+  return res;
+}
+
+async function apiDelete(path) {
+  const res = await apiFetch(path, { method: 'DELETE' });
+  return res;
+}
+
+// ============================================================
+// Toast
+// ============================================================
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => {
+    el.style.animation = 'fadeOut 0.3s ease forwards';
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
+// ============================================================
+// Modal
+// ============================================================
+function showModal(title, body, confirmLabel, confirmClass, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  const btn = document.getElementById('modal-confirm');
+  btn.textContent = confirmLabel;
+  btn.className = confirmClass;
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('open');
+  btn.onclick = () => { overlay.classList.remove('open'); onConfirm(); };
+}
+function showInputModal(title, placeholder, onConfirm) {
+  document.getElementById('modal-title').textContent = title;
+  const body = document.getElementById('modal-body');
+  body.innerHTML = '';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.placeholder = placeholder;
+  inp.style.cssText = 'width:100%;margin-top:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-0);border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;';
+  body.appendChild(inp);
+  const btn = document.getElementById('modal-confirm');
+  btn.textContent = 'Create';
+  btn.className = 'btn-confirm';
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('open');
+  btn.onclick = () => {
+    const val = inp.value.trim();
+    if (!val) return;
+    overlay.classList.remove('open');
+    onConfirm(val);
+  };
+  inp.focus();
+}
+document.getElementById('modal-cancel').onclick = () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+};
+
+// ============================================================
+// Login
+// ============================================================
+function showLogin() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-password').focus();
+}
+
+function hideLogin() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('app').style.display = 'grid';
+}
+
+async function doLogin() {
+  const pw = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  const btn = document.getElementById('login-btn');
+  err.textContent = '';
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+  try {
+    const res = await fetch(API + '/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: pw })
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      err.textContent = data.error || 'Login failed';
+      document.getElementById('login-password').value = '';
+      document.getElementById('login-password').focus();
+      return;
+    }
+    AUTH_TOKEN = data.token;
+    sessionStorage.setItem('swagmenus_token', AUTH_TOKEN);
+    hideLogin();
+    init();
+  } catch (e) {
+    err.textContent = 'Could not reach server: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Login';
+  }
+}
+
+// ============================================================
+// Init
+// ============================================================
+async function init() {
+  setStatus(false);
+  // Check auth by calling /api/menus
+  try {
+    const menus = await apiGet('/menus');
+    state.menus = menus;
+    state.connected = true;
+    setStatus(true);
+    renderMenuList();
+  } catch (e) {
+    if (e.message.includes('401')) {
+      showLogin();
+    } else {
+      toast('Could not connect to SwagMenus server: ' + e.message, 'error');
+    }
+    setStatus(false);
+    return;
+  }
+
+  // Preload materials
+  try {
+    state.materials = await apiGet('/materials');
+    const dl = document.getElementById('material-list');
+    dl.innerHTML = '';
+    for (const m of state.materials) {
+      const opt = document.createElement('option');
+      opt.value = m;
+      dl.appendChild(opt);
+    }
+  } catch (_) {}
+}
+
+function setStatus(ok) {
+  const dot = document.getElementById('status-dot');
+  const label = document.getElementById('status-label');
+  dot.className = ok ? 'ok' : '';
+  label.textContent = ok ? 'Connected' : 'Disconnected';
+}
+
+// ============================================================
+// Menu list
+// ============================================================
+function renderMenuList() {
+  // Also refresh the open-gui dropdown
+  const sel = document.getElementById('sel-open-gui');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— select a menu —</option>';
+  for (const name of state.menus) {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  }
+  if (prev) sel.value = prev;
+
+  const list = document.getElementById('menu-list');
+  list.innerHTML = '';
+  for (const name of state.menus) {
+    const el = document.createElement('div');
+    el.className = 'menu-item' + (state.currentMenu === name ? ' active' : '');
+    el.innerHTML = `<div class="menu-item-icon"></div><span class="menu-item-name">${name}</span>`;
+    el.onclick = () => loadMenu(name);
+    list.appendChild(el);
+  }
+}
+
+// ============================================================
+// Load menu — extended version defined below; this stub is superseded.
+// ============================================================
+
+function resolveItemSlots(itemData, menuSize) {
+  const slots = [];
+  if (Array.isArray(itemData.slots)) {
+    for (const s of itemData.slots) {
+      const n = parseInt(s);
+      if (!isNaN(n) && n >= 0 && n < menuSize) slots.push(n);
+    }
+  } else if (itemData.slot !== undefined && itemData.slot !== null) {
+    const n = parseInt(itemData.slot);
+    if (!isNaN(n) && n >= 0 && n < menuSize) slots.push(n);
+  }
+  return slots;
+}
+
+// ============================================================
+// Grid rendering — base implementation (extended below with drag+fill)
+// ============================================================
+function _renderGridCore(size) {
+  const grid = document.getElementById('slot-grid');
+  grid.style.gridTemplateColumns = 'repeat(9, 80px)';
+  grid.innerHTML = '';
+
+  for (let i = 0; i < size; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.dataset.slot = i;
+    updateSlotEl(slot, i);
+    slot.onclick = () => selectSlot(i);
+    grid.appendChild(slot);
+  }
+}
+// renderGrid is defined (overriding this) in the extensions section below.
+
+// Minecraft Wiki inventory icons — covers every item/block by Bukkit material name
+// e.g. BLACK_STAINED_GLASS_PANE → Invicon_Black_Stained_Glass_Pane.png
+function getIconUrl(mat) {
+  const titleCase = mat.split('_')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join('_');
+  return [`https://minecraft.wiki/w/Special:FilePath/Invicon_${titleCase}.png`];
+}
+
+// updateSlotEl is defined (overriding this stub) in the extensions section below.
+function _updateSlotElCore(slotEl, i) {
+  const item = state.items[i];
+  slotEl.className = 'slot' + (item ? ' filled' : '') + (state.selectedSlot === i ? ' selected' : '');
+  slotEl.innerHTML = `<span class="slot-num">${i}</span>`;
+
+  if (item) {
+    const mat = (item.material || 'STONE').toUpperCase();
+    const urls = getIconUrl(mat);
+
+    const img = document.createElement('img');
+    img.className = 'slot-icon';
+    img.alt = mat;
+
+    // Try item/ first, then block/, then fall back to colored badge
+    function tryNext(urlIndex) {
+      if (urlIndex >= urls.length) {
+        // Fallback: colored badge
+        img.replaceWith(makeBadge(mat));
+        return;
+      }
+      img.src = urls[urlIndex];
+      img.onerror = () => tryNext(urlIndex + 1);
+    }
+    tryNext(0);
+
+    slotEl.appendChild(img);
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'slot-name';
+    nameEl.innerHTML = item.display_name ? parseColors(item.display_name) : `<span style="color:var(--text-2);font-size:7px">${mat}</span>`;
+    slotEl.appendChild(nameEl);
+  }
+}
+
+function makeBadge(mat) {
+  const badge = document.createElement('div');
+  badge.className = 'slot-badge ' + matClass(mat);
+  badge.textContent = matAbbrev(mat);
+  return badge;
+}
+
+function refreshSlot(i) {
+  const el = document.querySelector(`.slot[data-slot="${i}"]`);
+  if (el) updateSlotEl(el, i);
+}
+
+// ============================================================
+// Slot selection
+// ============================================================
+function selectSlot(i) {
+  state.selectedSlot = i;
+
+  // Update selected state visually
+  document.querySelectorAll('.slot').forEach(el => {
+    el.classList.toggle('selected', parseInt(el.dataset.slot) === i);
+  });
+
+  const item = state.items[i];
+  if (item) {
+    loadItemIntoEditor(i, item);
+  } else {
+    loadBlankEditor(i);
+  }
+  showItemEditor();
+}
+
+// ============================================================
+// Item editor
+// ============================================================
+function showItemEditor() {
+  document.getElementById('panel-empty').style.display = 'none';
+  document.getElementById('panel-editor').style.display = '';
+}
+function hideItemEditor() {
+  document.getElementById('panel-empty').style.display = '';
+  document.getElementById('panel-editor').style.display = 'none';
+}
+
+function loadBlankEditor(slot) {
+  document.getElementById('panel-slot-label').textContent = 'Slot ' + slot + ' (new item)';
+  document.getElementById('inp-material').value = 'STONE';
+  document.getElementById('inp-slots').value = slot;
+  document.getElementById('inp-amount').value = 1;
+  document.getElementById('inp-name').value = '';
+  document.getElementById('inp-lore').value = '';
+  document.getElementById('chk-glow').checked = false;
+  document.getElementById('chk-hide').checked = false;
+  document.getElementById('inp-skull').value = '';
+  document.getElementById('inp-cmd-data').value = 0;
+  document.getElementById('inp-lc').value = '';
+  document.getElementById('inp-rc').value = '';
+  document.getElementById('inp-slc').value = '';
+  document.getElementById('inp-src').value = '';
+  document.getElementById('inp-mc').value = '';
+  document.getElementById('inp-req-type').value = '';
+  document.getElementById('inp-req-value').value = '';
+  updateColorPreviews();
+  updateSkullVisibility();
+  updateReqVisibility();
+}
+
+function loadItemIntoEditor(slot, item) {
+  document.getElementById('panel-slot-label').textContent = 'Slot ' + slot;
+  document.getElementById('inp-material').value = item.material || 'STONE';
+  document.getElementById('inp-slots').value = (item._slots || [slot]).join(', ');
+  document.getElementById('inp-amount').value = item.amount || 1;
+  document.getElementById('inp-name').value = item.display_name || '';
+  document.getElementById('inp-lore').value = Array.isArray(item.lore) ? item.lore.join('\n') : '';
+  document.getElementById('chk-glow').checked = !!item.glow;
+  document.getElementById('chk-hide').checked = !!item.hide_flags;
+  document.getElementById('inp-skull').value = item.skull_owner || '';
+  document.getElementById('inp-cmd-data').value = item.custom_model_data || 0;
+  document.getElementById('inp-lc').value = (item.left_click_commands || []).join('\n');
+  document.getElementById('inp-rc').value = (item.right_click_commands || []).join('\n');
+  document.getElementById('inp-slc').value = (item.shift_left_click_commands || []).join('\n');
+  document.getElementById('inp-src').value = (item.shift_right_click_commands || []).join('\n');
+  document.getElementById('inp-mc').value = (item.middle_click_commands || []).join('\n');
+
+  // Requirements
+  const req = item.view_requirement;
+  if (req && req.type) {
+    document.getElementById('inp-req-type').value = req.type;
+    document.getElementById('inp-req-value').value = req.value || req.permission || req.input || req.expression || '';
+  } else {
+    document.getElementById('inp-req-type').value = '';
+    document.getElementById('inp-req-value').value = '';
+  }
+
+  updateColorPreviews();
+  updateSkullVisibility();
+  updateReqVisibility();
+}
+
+function collectEditorItem() {
+  const slotsRaw = document.getElementById('inp-slots').value;
+  const slots = slotsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+  const material = document.getElementById('inp-material').value.trim().toUpperCase() || 'STONE';
+  const displayName = document.getElementById('inp-name').value;
+  const loreRaw = document.getElementById('inp-lore').value;
+  const lore = loreRaw ? loreRaw.split('\n') : [];
+  const amount = parseInt(document.getElementById('inp-amount').value) || 1;
+  const glow = document.getElementById('chk-glow').checked;
+  const hideFlags = document.getElementById('chk-hide').checked;
+  const skullOwner = document.getElementById('inp-skull').value.trim() || null;
+  const customModelData = parseInt(document.getElementById('inp-cmd-data').value) || 0;
+  const lc = textareaToList('inp-lc');
+  const rc = textareaToList('inp-rc');
+  const slc = textareaToList('inp-slc');
+  const src = textareaToList('inp-src');
+  const mc = textareaToList('inp-mc');
+
+  const reqType = document.getElementById('inp-req-type').value;
+  const reqValue = document.getElementById('inp-req-value').value.trim();
+
+  const item = {
+    material,
+    slots,
+    display_name: displayName,
+    lore,
+    amount,
+    glow,
+    hide_flags: hideFlags,
+    custom_model_data: customModelData,
+  };
+  if (skullOwner) item.skull_owner = skullOwner;
+  if (lc.length) item.left_click_commands = lc;
+  if (rc.length) item.right_click_commands = rc;
+  if (slc.length) item.shift_left_click_commands = slc;
+  if (src.length) item.shift_right_click_commands = src;
+  if (mc.length) item.middle_click_commands = mc;
+  if (reqType) {
+    item.view_requirement = { type: reqType, value: reqValue };
+  }
+
+  return { slots, item };
+}
+
+function textareaToList(id) {
+  const v = document.getElementById(id).value.trim();
+  return v ? v.split('\n').map(l => l.trim()).filter(Boolean) : [];
+}
+
+document.getElementById('btn-open-gui-add').onclick = () => {
+  const menu = document.getElementById('sel-open-gui').value;
+  if (!menu) { toast('Select a menu first.', 'error'); return; }
+
+  const clickMap = { lc: 'inp-lc', rc: 'inp-rc', slc: 'inp-slc', src: 'inp-src', mc: 'inp-mc' };
+  const targetId = clickMap[document.getElementById('sel-open-gui-click').value];
+  const ta = document.getElementById(targetId);
+  const action = `[open] ${menu}`;
+  ta.value = ta.value ? ta.value.trimEnd() + '\n' + action : action;
+  ta.focus();
+  toast(`Added [open] ${menu}`, 'success');
+};
+
+document.getElementById('btn-apply-item').onclick = () => {
+  if (state.currentMenu === null) return;
+  const { slots, item } = collectEditorItem();
+  if (!slots.length) { toast('Please specify at least one slot.', 'error'); return; }
+
+  const menuSize = parseInt(document.getElementById('sel-size').value);
+  const validSlots = slots.filter(s => s >= 0 && s < menuSize);
+  if (!validSlots.length) { toast('All slots are out of range for menu size ' + menuSize, 'error'); return; }
+
+  // Remove old item from any previously assigned slots for this panel's item
+  const oldItem = state.selectedSlot !== null ? state.items[state.selectedSlot] : null;
+  if (oldItem) {
+    for (const s of (oldItem._slots || [])) {
+      if (!validSlots.includes(s)) {
+        delete state.items[s];
+        refreshSlot(s);
+      }
+    }
+  }
+
+  const stored = { ...item, _slots: validSlots, _key: oldItem?._key || ('item_' + validSlots[0]) };
+  for (const s of validSlots) {
+    state.items[s] = stored;
+    refreshSlot(s);
+  }
+
+  // Update selected slot to first slot in list
+  state.selectedSlot = validSlots[0];
+  document.querySelectorAll('.slot').forEach(el => {
+    el.classList.toggle('selected', validSlots.includes(parseInt(el.dataset.slot)));
+  });
+
+  toast('Item applied to slot(s) ' + validSlots.join(', '), 'success');
+};
+
+document.getElementById('btn-delete-item').onclick = () => {
+  if (state.selectedSlot === null) return;
+  const item = state.items[state.selectedSlot];
+  if (!item) return;
+  for (const s of (item._slots || [state.selectedSlot])) {
+    delete state.items[s];
+    refreshSlot(s);
+  }
+  state.selectedSlot = null;
+  hideItemEditor();
+  toast('Item removed.', 'info');
+};
+
+// ============================================================
+// Live color preview
+// ============================================================
+function updateColorPreviews() {
+  document.getElementById('preview-name').innerHTML = parseColors(document.getElementById('inp-name').value) || '<span style="color:var(--text-2)">Preview</span>';
+  const loreLines = document.getElementById('inp-lore').value.split('\n');
+  document.getElementById('preview-lore').innerHTML = loreLines.map(l => parseColors(l) || '').join('\n') || '<span style="color:var(--text-2)">Preview</span>';
+}
+document.getElementById('inp-name').addEventListener('input', updateColorPreviews);
+document.getElementById('inp-lore').addEventListener('input', updateColorPreviews);
+
+// ============================================================
+// Skull visibility
+// ============================================================
+function updateSkullVisibility() {
+  const mat = document.getElementById('inp-material').value.trim().toUpperCase();
+  document.getElementById('skull-group').style.display = mat === 'PLAYER_HEAD' ? '' : 'none';
+}
+document.getElementById('inp-material').addEventListener('input', updateSkullVisibility);
+
+// ============================================================
+// Requirement visibility
+// ============================================================
+function updateReqVisibility() {
+  const type = document.getElementById('inp-req-type').value;
+  const group = document.getElementById('req-input-group');
+  const label = document.getElementById('req-input-label');
+  if (!type) { group.style.display = 'none'; return; }
+  group.style.display = '';
+  const labels = {
+    'has_permission': 'Permission Node',
+    'has_money': 'Amount',
+    'string_equals': 'Input = Value',
+    'string_contains': 'Input contains Value',
+    'regex_matches': 'Regex Pattern',
+    'javascript': 'JavaScript Expression',
+  };
+  label.textContent = labels[type] || 'Value';
+}
+document.getElementById('inp-req-type').addEventListener('change', updateReqVisibility);
+
+// ============================================================
+// Size change — rebuild grid
+// ============================================================
+document.getElementById('sel-size').addEventListener('change', () => {
+  if (!state.currentMenu) return;
+  const newSize = parseInt(document.getElementById('sel-size').value);
+  // Remove out-of-range items
+  for (const slot of Object.keys(state.items).map(Number)) {
+    if (slot >= newSize) delete state.items[slot];
+  }
+  renderGrid(newSize);
+  if (state.selectedSlot !== null && state.selectedSlot >= newSize) {
+    state.selectedSlot = null;
+    hideItemEditor();
+  }
+});
+
+// ============================================================
+// Save
+// ============================================================
+document.getElementById('btn-save').onclick = async () => {
+  if (!state.currentMenu) { toast('No menu selected.', 'error'); return; }
+
+  const menuSize = parseInt(document.getElementById('sel-size').value);
+  const title = document.getElementById('inp-title').value;
+  const interval = parseInt(document.getElementById('inp-interval').value) || 0;
+  const cmdsRaw = document.getElementById('inp-cmd').value;
+  const cmds = cmdsRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Build items section
+  const items = {};
+  // Group items by their _key
+  const seenKeys = new Set();
+  for (const [slotStr, item] of Object.entries(state.items)) {
+    const key = item._key || ('item_' + slotStr);
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    const { _key, _slots, ...cleanItem } = item;
+    cleanItem.slots = item._slots;
+    items[key] = cleanItem;
+  }
+
+  const payload = {
+    menu_title: title,
+    menu_size: menuSize,
+    update_interval: interval,
+    open_commands: cmds,
+    items,
+  };
+
+  try {
+    const res = await apiPost('/menus/' + state.currentMenu, payload);
+    if (res.ok) {
+      toast('Menu saved and reloaded!', 'success');
+    } else {
+      const j = await res.json().catch(() => ({}));
+      toast('Save failed: ' + (j.error || res.status), 'error');
+    }
+  } catch (e) {
+    toast('Save error: ' + e.message, 'error');
+  }
+};
+
+// ============================================================
+// New menu
+// ============================================================
+document.getElementById('btn-new-menu').onclick = () => {
+  showInputModal('New Menu', 'menu_name (lowercase, no spaces)', async (name) => {
+    name = name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+    if (!name) { toast('Invalid menu name.', 'error'); return; }
+    const payload = { menu_title: '&8' + name, menu_size: 54, update_interval: 0, open_commands: [name], items: {} };
+    try {
+      const res = await apiPost('/menus/' + name, payload);
+      if (res.ok) {
+        state.menus.push(name);
+        state.menus.sort();
+        renderMenuList();
+        await loadMenu(name);
+        toast('Menu "' + name + '" created!', 'success');
+      } else {
+        const j = await res.json().catch(() => ({}));
+        toast('Error: ' + (j.error || res.status), 'error');
+      }
+    } catch (e) {
+      toast('Error: ' + e.message, 'error');
+    }
+  });
+};
+
+// ============================================================
+// Delete menu
+// ============================================================
+document.getElementById('btn-delete-menu').onclick = () => {
+  if (!state.currentMenu) { toast('No menu selected.', 'error'); return; }
+  showModal(
+    'Delete Menu',
+    `Are you sure you want to delete "${state.currentMenu}"? This cannot be undone.`,
+    'Delete', 'btn-confirm-red',
+    async () => {
+      try {
+        const res = await apiDelete('/menus/' + state.currentMenu);
+        if (res.ok) {
+          state.menus = state.menus.filter(m => m !== state.currentMenu);
+          state.currentMenu = null;
+          state.menuData = null;
+          state.items = {};
+          state.selectedSlot = null;
+          renderMenuList();
+          document.getElementById('no-menu').style.display = '';
+          document.getElementById('grid-wrap').style.display = 'none';
+          hideItemEditor();
+          toast('Menu deleted.', 'info');
+        } else {
+          const j = await res.json().catch(() => ({}));
+          toast('Delete failed: ' + (j.error || res.status), 'error');
+        }
+      } catch (e) {
+        toast('Error: ' + e.message, 'error');
+      }
+    }
+  );
+};
+
+// ============================================================
+// Undo / Redo (Feature 9)
+// ============================================================
+const undoStack = [];
+const redoStack = [];
+const MAX_UNDO = 50;
+
+function snapshot() {
+  const s = {
+    items: JSON.parse(JSON.stringify(state.items)),
+    menuData: state.menuData ? JSON.parse(JSON.stringify(state.menuData)) : null,
+    fillItem: state.fillItem ? JSON.parse(JSON.stringify(state.fillItem)) : null,
+  };
+  undoStack.push(s);
+  if (undoStack.length > MAX_UNDO) undoStack.shift();
+  redoStack.length = 0;
+  updateUndoRedoButtons();
+}
+
+function restoreSnapshot(s) {
+  state.items = JSON.parse(JSON.stringify(s.items));
+  state.menuData = s.menuData ? JSON.parse(JSON.stringify(s.menuData)) : null;
+  state.fillItem = s.fillItem ? JSON.parse(JSON.stringify(s.fillItem)) : null;
+  const size = parseInt(document.getElementById('sel-size').value);
+  renderGrid(size);
+  state.selectedSlot = null;
+  hideItemEditor();
+}
+
+function undo() {
+  if (!undoStack.length) return;
+  const current = {
+    items: JSON.parse(JSON.stringify(state.items)),
+    menuData: state.menuData ? JSON.parse(JSON.stringify(state.menuData)) : null,
+    fillItem: state.fillItem ? JSON.parse(JSON.stringify(state.fillItem)) : null,
+  };
+  redoStack.push(current);
+  restoreSnapshot(undoStack.pop());
+  updateUndoRedoButtons();
+}
+
+function redo() {
+  if (!redoStack.length) return;
+  const current = {
+    items: JSON.parse(JSON.stringify(state.items)),
+    menuData: state.menuData ? JSON.parse(JSON.stringify(state.menuData)) : null,
+    fillItem: state.fillItem ? JSON.parse(JSON.stringify(state.fillItem)) : null,
+  };
+  undoStack.push(current);
+  restoreSnapshot(redoStack.pop());
+  updateUndoRedoButtons();
+}
+
+function updateUndoRedoButtons() {
+  const u = document.getElementById('btn-undo');
+  const r = document.getElementById('btn-redo');
+  u.disabled = undoStack.length === 0;
+  r.disabled = redoStack.length === 0;
+  u.style.opacity = u.disabled ? '0.4' : '1';
+  r.style.opacity = r.disabled ? '0.4' : '1';
+}
+
+document.getElementById('btn-undo').onclick = undo;
+document.getElementById('btn-redo').onclick = redo;
+
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && !e.altKey) {
+    if (e.key === 'z' || e.key === 'Z') {
+      if (e.shiftKey) { e.preventDefault(); redo(); }
+      else { e.preventDefault(); undo(); }
+      return;
+    }
+    if (e.key === 'y' || e.key === 'Y') { e.preventDefault(); redo(); }
+  }
+});
+
+// ============================================================
+// Fill Item mode (Feature 8)
+// ============================================================
+state.fillItem = null; // null = no fill item
+let fillItemMode = false;
+
+function enterFillItemMode() {
+  fillItemMode = true;
+  document.getElementById('panel-slot-label').textContent = 'Fill Item';
+  document.getElementById('slots-row').style.display = 'none';
+  document.getElementById('btn-delete-item').style.display = 'none';
+  document.getElementById('btn-clear-fill-item').style.display = '';
+
+  if (state.fillItem) {
+    // Load fill item data into editor
+    const fi = state.fillItem;
+    document.getElementById('inp-material').value = fi.material || 'GRAY_STAINED_GLASS_PANE';
+    document.getElementById('inp-amount').value = fi.amount || 1;
+    document.getElementById('inp-name').value = fi.display_name || '';
+    document.getElementById('inp-lore').value = Array.isArray(fi.lore) ? fi.lore.join('\n') : '';
+    document.getElementById('chk-glow').checked = !!fi.glow;
+    document.getElementById('chk-hide').checked = !!fi.hide_flags;
+    document.getElementById('inp-skull').value = fi.skull_owner || '';
+    document.getElementById('inp-cmd-data').value = fi.custom_model_data || 0;
+    document.getElementById('inp-lc').value = '';
+    document.getElementById('inp-rc').value = '';
+    document.getElementById('inp-slc').value = '';
+    document.getElementById('inp-src').value = '';
+    document.getElementById('inp-mc').value = '';
+    document.getElementById('inp-req-type').value = '';
+    document.getElementById('inp-req-value').value = '';
+  } else {
+    loadBlankEditor(null);
+    document.getElementById('inp-material').value = 'GRAY_STAINED_GLASS_PANE';
+  }
+  updateColorPreviews();
+  updateSkullVisibility();
+  updateReqVisibility();
+  showItemEditor();
+}
+
+function exitFillItemMode() {
+  fillItemMode = false;
+  document.getElementById('slots-row').style.display = '';
+  document.getElementById('btn-delete-item').style.display = '';
+  document.getElementById('btn-clear-fill-item').style.display = 'none';
+  hideItemEditor();
+}
+
+document.getElementById('btn-fill-item').onclick = () => {
+  if (!state.currentMenu) return;
+  enterFillItemMode();
+};
+
+document.getElementById('btn-clear-fill-item').onclick = () => {
+  snapshot();
+  state.fillItem = null;
+  const size = parseInt(document.getElementById('sel-size').value);
+  renderGrid(size);
+  exitFillItemMode();
+  toast('Fill item cleared.', 'info');
+};
+
+// ============================================================
+// Drag-and-drop slots (Feature 7)
+// ============================================================
+let dragSourceSlot = null;
+
+function attachDragEvents(slotEl, i) {
+  slotEl.setAttribute('draggable', 'true');
+
+  slotEl.addEventListener('dragstart', (e) => {
+    dragSourceSlot = i;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', String(i));
+  });
+
+  slotEl.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    slotEl.classList.add('drag-over');
+  });
+
+  slotEl.addEventListener('dragleave', () => {
+    slotEl.classList.remove('drag-over');
+  });
+
+  slotEl.addEventListener('drop', (e) => {
+    e.preventDefault();
+    slotEl.classList.remove('drag-over');
+    const src = dragSourceSlot;
+    const dst = i;
+    if (src === null || src === dst) return;
+
+    snapshot();
+
+    const srcItem = state.items[src] || null;
+    const dstItem = state.items[dst] || null;
+
+    // Swap (or move if dst is empty)
+    if (srcItem) {
+      // Update _slots arrays
+      const newSrc = { ...srcItem, _slots: srcItem._slots.map(s => s === src ? dst : s) };
+      state.items[dst] = newSrc;
+    } else {
+      delete state.items[dst];
+    }
+
+    if (dstItem) {
+      const newDst = { ...dstItem, _slots: dstItem._slots.map(s => s === dst ? src : s) };
+      state.items[src] = newDst;
+    } else {
+      delete state.items[src];
+    }
+
+    refreshSlot(src);
+    refreshSlot(dst);
+    dragSourceSlot = null;
+  });
+
+  slotEl.addEventListener('dragend', () => {
+    dragSourceSlot = null;
+    document.querySelectorAll('.slot').forEach(el => el.classList.remove('drag-over'));
+  });
+}
+
+// ============================================================
+// renderGrid — full implementation (replaces _renderGridCore above)
+// Adds drag-and-drop (Feature 7) and fill-item click handling (Feature 8)
+// ============================================================
+function renderGrid(size) {
+  const grid = document.getElementById('slot-grid');
+  grid.style.gridTemplateColumns = 'repeat(9, 80px)';
+  grid.innerHTML = '';
+
+  for (let i = 0; i < size; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.dataset.slot = i;
+    updateSlotEl(slot, i);
+    slot.onclick = () => {
+      if (fillItemMode) exitFillItemMode();
+      selectSlot(i);
+    };
+    attachDragEvents(slot, i);
+    grid.appendChild(slot);
+  }
+}
+
+// ============================================================
+// btn-apply-item — handles fill-item mode (Feature 8) and snapshot (Feature 9)
+// Overrides the original assignment above.
+// ============================================================
+document.getElementById('btn-apply-item').onclick = () => {
+  if (state.currentMenu === null) return;
+
+  if (fillItemMode) {
+    // Save to fill item
+    const material = document.getElementById('inp-material').value.trim().toUpperCase() || 'GRAY_STAINED_GLASS_PANE';
+    const displayName = document.getElementById('inp-name').value;
+    const loreRaw = document.getElementById('inp-lore').value;
+    const lore = loreRaw ? loreRaw.split('\n') : [];
+    const amount = parseInt(document.getElementById('inp-amount').value) || 1;
+    const glow = document.getElementById('chk-glow').checked;
+    const hideFlags = document.getElementById('chk-hide').checked;
+    const skullOwner = document.getElementById('inp-skull').value.trim() || null;
+    const customModelData = parseInt(document.getElementById('inp-cmd-data').value) || 0;
+
+    snapshot();
+    state.fillItem = { material, display_name: displayName, lore, amount, glow, hide_flags: hideFlags, custom_model_data: customModelData };
+    if (skullOwner) state.fillItem.skull_owner = skullOwner;
+
+    const sz = parseInt(document.getElementById('sel-size').value);
+    renderGrid(sz);
+    toast('Fill item applied.', 'success');
+    return;
+  }
+
+  const { slots, item } = collectEditorItem();
+  if (!slots.length) { toast('Please specify at least one slot.', 'error'); return; }
+
+  const menuSize = parseInt(document.getElementById('sel-size').value);
+  const validSlots = slots.filter(s => s >= 0 && s < menuSize);
+  if (!validSlots.length) { toast('All slots are out of range for menu size ' + menuSize, 'error'); return; }
+
+  snapshot();
+
+  // Remove old item from any previously assigned slots for this panel's item
+  const oldItem = state.selectedSlot !== null ? state.items[state.selectedSlot] : null;
+  if (oldItem) {
+    for (const s of (oldItem._slots || [])) {
+      if (!validSlots.includes(s)) {
+        delete state.items[s];
+        refreshSlot(s);
+      }
+    }
+  }
+
+  const stored = { ...item, _slots: validSlots, _key: oldItem?._key || ('item_' + validSlots[0]) };
+  for (const s of validSlots) {
+    state.items[s] = stored;
+    refreshSlot(s);
+  }
+
+  state.selectedSlot = validSlots[0];
+  document.querySelectorAll('.slot').forEach(el => {
+    el.classList.toggle('selected', validSlots.includes(parseInt(el.dataset.slot)));
+  });
+
+  toast('Item applied to slot(s) ' + validSlots.join(', '), 'success');
+};
+
+// ============================================================
+// btn-delete-item — takes snapshot first (Feature 9). Overrides original.
+// ============================================================
+document.getElementById('btn-delete-item').onclick = () => {
+  if (state.selectedSlot === null) return;
+  const item = state.items[state.selectedSlot];
+  if (!item) return;
+  snapshot();
+  for (const s of (item._slots || [state.selectedSlot])) {
+    delete state.items[s];
+    refreshSlot(s);
+  }
+  state.selectedSlot = null;
+  hideItemEditor();
+  toast('Item removed.', 'info');
+};
+
+// ============================================================
+// updateSlotEl — full implementation (replaces _updateSlotElCore above)
+// Shows fill item in empty slots for visual feedback (Feature 8)
+// ============================================================
+function updateSlotEl(slotEl, i) {
+  const item = state.items[i];
+  // Show fill item in empty slots for visual feedback
+  const displayItem = item || (state.fillItem ? { ...state.fillItem, _isFillItem: true } : null);
+
+  slotEl.className = 'slot' + (item ? ' filled' : '') + (state.selectedSlot === i ? ' selected' : '');
+  slotEl.innerHTML = `<span class="slot-num">${i}</span>`;
+
+  if (displayItem) {
+    const mat = (displayItem.material || 'STONE').toUpperCase();
+    const urls = getIconUrl(mat);
+
+    const img = document.createElement('img');
+    img.className = 'slot-icon';
+    img.alt = mat;
+    if (displayItem._isFillItem) img.style.opacity = '0.45';
+
+    function tryNext(urlIndex) {
+      if (urlIndex >= urls.length) {
+        img.replaceWith(makeBadge(mat));
+        return;
+      }
+      img.src = urls[urlIndex];
+      img.onerror = () => tryNext(urlIndex + 1);
+    }
+    tryNext(0);
+    slotEl.appendChild(img);
+
+    if (!displayItem._isFillItem) {
+      const nameEl = document.createElement('div');
+      nameEl.className = 'slot-name';
+      nameEl.innerHTML = displayItem.display_name
+        ? parseColors(displayItem.display_name)
+        : `<span style="color:var(--text-2);font-size:7px">${mat}</span>`;
+      slotEl.appendChild(nameEl);
+    }
+  }
+}
+
+// ============================================================
+// btn-save — includes fill_item in payload (Feature 8). Overrides original.
+// ============================================================
+document.getElementById('btn-save').onclick = async () => {
+  if (!state.currentMenu) { toast('No menu selected.', 'error'); return; }
+
+  const menuSize = parseInt(document.getElementById('sel-size').value);
+  const title = document.getElementById('inp-title').value;
+  const interval = parseInt(document.getElementById('inp-interval').value) || 0;
+  const cmdsRaw = document.getElementById('inp-cmd').value;
+  const cmds = cmdsRaw.split(',').map(s => s.trim()).filter(Boolean);
+
+  // Build items section
+  const items = {};
+  const seenKeys = new Set();
+  for (const [slotStr, item] of Object.entries(state.items)) {
+    const key = item._key || ('item_' + slotStr);
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    const { _key, _slots, _isFillItem, ...cleanItem } = item;
+    cleanItem.slots = item._slots;
+    items[key] = cleanItem;
+  }
+
+  const payload = {
+    menu_title: title,
+    menu_size: menuSize,
+    update_interval: interval,
+    open_commands: cmds,
+    items,
+  };
+
+  if (state.fillItem) {
+    const { _isFillItem, ...cleanFill } = state.fillItem;
+    payload.fill_item = cleanFill;
+  }
+
+  try {
+    const res = await apiFetch('/menus/' + state.currentMenu, { method: 'POST', body: payload });
+    if (res.ok) {
+      toast('Menu saved and reloaded!', 'success');
+    } else {
+      const j = await res.json().catch(() => ({}));
+      toast('Save failed: ' + (j.error || res.status), 'error');
+    }
+  } catch (e) {
+    toast('Save error: ' + e.message, 'error');
+  }
+};
+
+// ============================================================
+// loadMenu — full implementation with fill_item and undo stack reset
+// ============================================================
+async function loadMenu(name) {
+  try {
+    const data = await apiGet('/menus/' + name);
+    state.currentMenu = name;
+    state.menuData = data;
+    state.items = {};
+    state.selectedSlot = null;
+    state.fillItem = null;
+    fillItemMode = false;
+    undoStack.length = 0;
+    redoStack.length = 0;
+    updateUndoRedoButtons();
+
+    document.getElementById('inp-title').value = data.menu_title || '';
+    const sz = data.menu_size || 54;
+    document.getElementById('sel-size').value = sz;
+    let cmds = [];
+    if (data.open_command) cmds.push(data.open_command);
+    if (Array.isArray(data.open_commands)) cmds = cmds.concat(data.open_commands);
+    document.getElementById('inp-cmd').value = [...new Set(cmds)].join(', ');
+    document.getElementById('inp-interval').value = data.update_interval || 0;
+
+    // Parse fill_item
+    if (data.fill_item && typeof data.fill_item === 'object') {
+      state.fillItem = { ...data.fill_item };
+    }
+
+    // Parse items
+    if (data.items && typeof data.items === 'object') {
+      for (const [key, itemData] of Object.entries(data.items)) {
+        const slots = resolveItemSlots(itemData, sz);
+        const item = { ...itemData, _key: key, _slots: slots };
+        for (const slot of slots) {
+          state.items[slot] = item;
+        }
+      }
+    }
+
+    renderMenuList();
+    renderGrid(sz);
+    document.getElementById('no-menu').style.display = 'none';
+    document.getElementById('grid-wrap').style.display = '';
+    exitFillItemMode();
+    hideItemEditor();
+
+  } catch (e) {
+    toast('Failed to load menu: ' + e.message, 'error');
+  }
+}
+
+// ============================================================
+// Start
+// ============================================================
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+# =====================================================
+# SwagMenus — Example Server Selector Menu
+# =====================================================
+# Demonstrates multi-slot layouts, sounds, actions, and
+# permission-based item visibility.
+#
+# Open with: /sm open example_server_selector
+
+menu_title: "&8&lServer &6Selector"
+menu_size: 27
+
+open_command: servers
+open_commands:
+  - servers
+  - hub
+
+# No auto-refresh needed for a static server list.
+update_interval: 0
+
+fill_item:
+  material: GRAY_STAINED_GLASS_PANE
+  display_name: " "
+  hide_flags: true
+
+items:
+
+  # --- Survival Server ---
+  survival:
+    material: GRASS_BLOCK
+    slot: 10
+    display_name: "&aSurvival"
+    lore:
+      - ""
+      - "&7Classic survival gameplay."
+      - "&7Build, explore, and survive!"
+      - ""
+      - "&eClick to connect!"
+    glow: false
+    hide_flags: true
+    left_click_commands:
+      - "[sound] ENTITY_PLAYER_LEVELUP 1.0 1.2"
+      - "[message] &aConnecting to &2Survival&a..."
+      - "[close]"
+      - "[delay] 10"
+      - "[console] connect %player_name% survival"
+
+  # --- Creative Server ---
+  creative:
+    material: CRAFTING_TABLE
+    slot: 12
+    display_name: "&bCreative"
+    lore:
+      - ""
+      - "&7Unleash your creativity!"
+      - "&7Unlimited resources await."
+      - ""
+      - "&eClick to connect!"
+    hide_flags: true
+    left_click_commands:
+      - "[sound] ENTITY_PLAYER_LEVELUP 1.0 1.4"
+      - "[message] &bConnecting to &3Creative&b..."
+      - "[close]"
+      - "[delay] 10"
+      - "[console] connect %player_name% creative"
+
+  # --- Minigames Server ---
+  minigames:
+    material: FIREWORK_ROCKET
+    slot: 14
+    display_name: "&eMinigames"
+    lore:
+      - ""
+      - "&7Fun mini-games for everyone!"
+      - "&7Compete for the top spot."
+      - ""
+      - "&eClick to connect!"
+    glow: true
+    hide_flags: true
+    left_click_commands:
+      - "[sound] ENTITY_FIREWORK_ROCKET_LAUNCH"
+      - "[message] &eConnecting to &6Minigames&e..."
+      - "[close]"
+      - "[delay] 10"
+      - "[console] connect %player_name% minigames"
+
+  # --- Staff-only: Admin Hub ---
+  admin_hub:
+    material: NETHER_STAR
+    slot: 16
+    display_name: "&cAdmin Hub"
+    lore:
+      - ""
+      - "&7Administration server."
+      - "&cStaff only."
+      - ""
+      - "&eClick to connect!"
+    glow: true
+    hide_flags: true
+    view_requirement:
+      requirements:
+        staff_check:
+          type: has_permission
+          permission: "swagmenus.admin"
+      deny_commands: []
+    left_click_commands:
+      - "[sound] ENTITY_PLAYER_LEVELUP"
+      - "[message] &cConnecting to &4Admin Hub&c..."
+      - "[close]"
+      - "[delay] 10"
+      - "[console] connect %player_name% admin"
+
+  # --- Back button ---
+  back:
+    material: ARROW
+    slot: 22
+    display_name: "&7Back"
+    lore:
+      - "&7Return to the main menu."
+    hide_flags: true
+    left_click_commands:
+      - "[open] example_main"
+
+  # --- Close button ---
+  close:
+    material: BARRIER
+    slot: 26
+    display_name: "&cClose"
+    lore:
+      - "&7Click to close this menu."
+    hide_flags: true
+    left_click_commands:
+      - "[close]"
+
+  # --- Top border ---
+  border:
+    material: BLACK_STAINED_GLASS_PANE
+    slots: [0, 1, 2, 3, 4, 5, 6, 7, 8]
+    display_name: " "
+    hide_flags: true

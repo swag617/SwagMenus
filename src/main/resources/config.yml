@@ -1,0 +1,43 @@
+# =====================================================
+# SwagMenus Configuration
+# =====================================================
+
+# Watch the menus/ folder for file changes and auto-reload menus.
+# This is great for development — edit a menu YAML and it reloads instantly.
+# Set to false for very large servers if file watching causes issues.
+auto_reload_on_change: true
+
+# The default update interval (in ticks) for menus that don't specify one.
+# This is only a fallback — individual menus can override with 'update_interval'.
+# 0 = no auto-refresh by default.
+default_update_interval: 0
+
+# Whether to log detailed debug information to console.
+# Useful for diagnosing menu loading and action execution issues.
+debug: false
+
+# =====================================================
+# Web Editor
+# =====================================================
+web_editor:
+  # Enable or disable the web editor entirely.
+  enabled: true
+  # Port the embedded HTTP server listens on.
+  # Change with: /sm port <number>  (range 1024-65535)
+  port: 8080
+  # Address to bind to.
+  # 0.0.0.0 = all interfaces (accessible from network)
+  # 127.0.0.1 = localhost only
+  bind-address: "0.0.0.0"
+  # Password to log into the web editor. Change this!
+  password: "admin"
+  # Session token lifetime in minutes (inactivity-based expiry).
+  token_expiry_minutes: 30
+
+# =====================================================
+# Messages
+# =====================================================
+messages:
+  no_permission: "&cYou don't have permission to do that."
+  menu_not_found: "&c[SwagMenus] Menu '%menu%' was not found."
+  player_not_found: "&c[SwagMenus] Player '%player%' was not found."

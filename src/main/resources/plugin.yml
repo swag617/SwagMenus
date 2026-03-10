@@ -1,0 +1,56 @@
+name: SwagMenus
+version: ${project.version}
+main: com.swag.swagmenus.SwagMenus
+api-version: '1.21'
+author: SwagDev
+description: A user-friendly custom GUI menu plugin with a web-based editor.
+website: https://github.com/swag617/SwagMenus
+
+softdepend:
+  - PlaceholderAPI
+  - Vault
+
+commands:
+  sm:
+    description: Main SwagMenus command.
+    usage: /sm <open|list|reload|info|execute|help>
+    permission: swagmenus.use
+    aliases:
+      - swagmenus
+      - smenu
+
+permissions:
+  swagmenus.use:
+    description: Allows use of the /sm command.
+    default: true
+
+  swagmenus.open:
+    description: Allows opening menus for yourself.
+    default: true
+
+  swagmenus.open.others:
+    description: Allows opening menus for other players.
+    default: op
+
+  swagmenus.list:
+    description: Allows listing all menus.
+    default: op
+
+  swagmenus.reload:
+    description: Allows reloading menus.
+    default: op
+
+  swagmenus.execute:
+    description: Allows executing actions via /sm execute.
+    default: op
+
+  swagmenus.admin:
+    description: Grants all admin permissions and receives error notifications.
+    default: op
+    children:
+      swagmenus.use: true
+      swagmenus.open: true
+      swagmenus.open.others: true
+      swagmenus.list: true
+      swagmenus.reload: true
+      swagmenus.execute: true
