@@ -534,6 +534,8 @@ public class MenuManager {
 
     public boolean menuExists(String name) { return menus.containsKey(name.toLowerCase()); }
 
+    public void removeMenu(String name) { menus.remove(name.toLowerCase()); }
+
     public File getMenusFolder() { return menusFolder; }
 
     public void notifyAdmins(String message) {

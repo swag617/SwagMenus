@@ -127,7 +127,7 @@ public class MenuFileWatcher implements Runnable {
 
     private void handleDelete(String menuName) {
         if (menuManager.menuExists(menuName)) {
-            menuManager.getMenus();
+            menuManager.removeMenu(menuName);
             LOG.info("Menu file deleted: " + menuName + ".yml — menu removed from memory.");
             menuManager.notifyAdmins("&e[SwagMenus] Menu &6" + menuName + " &ewas deleted.");
         }
