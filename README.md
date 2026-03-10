@@ -5,7 +5,7 @@
 # ✦ SwagMenus
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Paper-1.21.x-667eea?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgo=" alt="Paper 1.21.x">
+  <img src="https://img.shields.io/badge/Paper-1.21.x-667eea?style=for-the-badge" alt="Paper 1.21.x">
   <img src="https://img.shields.io/badge/Java-21-764ba2?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21">
   <img src="https://img.shields.io/badge/PlaceholderAPI-supported-5fe05f?style=for-the-badge" alt="PAPI">
   <img src="https://img.shields.io/badge/License-All%20Rights%20Reserved-f0c060?style=for-the-badge" alt="License">
@@ -282,6 +282,6 @@ PlaceholderAPI is a soft dependency — the plugin loads without it, but placeho
 
 <div align="center">
 
-**Built by [SwagDev](https://swag617.github.io/) · [Portfolio](https://swag617.github.io/) · [SwagFishing](https://swag617.github.io/swagfishing-docs/)**
+**Built by [Swag617](https://swag617.github.io/) · [Portfolio](https://swag617.github.io/) · [SwagFishing](https://swag617.github.io/swagfishing-docs/)**
 
 </div>

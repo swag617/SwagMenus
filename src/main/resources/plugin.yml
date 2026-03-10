@@ -2,7 +2,7 @@ name: SwagMenus
 version: ${project.version}
 main: com.swag.swagmenus.SwagMenus
 api-version: '1.21'
-author: SwagDev
+author: Swag617
 description: A user-friendly custom GUI menu plugin with a web-based editor.
 website: https://github.com/swag617/SwagMenus
 
