@@ -48,7 +48,8 @@
       "WebFetch(domain:swag617.github.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:github.com)",
-      "Bash(find /c/Users/luket/IdeaProjects/SwagMenus/src -name \"*.java\" | wc -l 2>/dev/null || ls /c/Users/luket/IdeaProjects/SwagMenus/src/main/java/com/swag/swagmenus/**/*.java 2>/dev/null | wc -l\nfind /c/Users/luket/IdeaProjects/SwagMenus/docs -type f | sort)"
+      "Bash(find /c/Users/luket/IdeaProjects/SwagMenus/src -name \"*.java\" | wc -l 2>/dev/null || ls /c/Users/luket/IdeaProjects/SwagMenus/src/main/java/com/swag/swagmenus/**/*.java 2>/dev/null | wc -l\nfind /c/Users/luket/IdeaProjects/SwagMenus/docs -type f | sort)",
+      "Bash(curl -s \"https://swag617.github.io/swagfishing-docs/\")"
     ]
   }
 }
