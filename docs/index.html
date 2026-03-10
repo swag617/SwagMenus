@@ -75,7 +75,6 @@
         hook.mounted(function() { setTimeout(fixLayout, 0); });
         hook.doneEach(function() {
           fixLayout();
-          window.scrollTo(0, 0);
 
           var items = document.querySelectorAll('.sidebar-nav > ul > li');
           items.forEach(function(li) {
