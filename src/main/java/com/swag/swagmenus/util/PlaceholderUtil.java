@@ -15,18 +15,14 @@ public final class PlaceholderUtil {
 
     private PlaceholderUtil() {}
 
-    /**
-     * Returns true if PlaceholderAPI is installed and enabled.
-     */
     public static boolean isEnabled() {
         return Bukkit.getPluginManager().getPlugin("PlaceholderAPI") != null
                 && Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI");
     }
 
     /**
-     * Applies PlaceholderAPI replacements to a string for the given player.
-     * If PAPI is not available, returns the input unchanged.
-     * Also replaces the built-in %player_name% and %player_displayname% without PAPI.
+     * Applies PlaceholderAPI replacements for the given player. Also handles a small set
+     * of built-in placeholders (%player_name%, %player_displayname%, etc.) without PAPI.
      */
     public static String apply(String input, Player player) {
         if (input == null) return "";
@@ -37,9 +33,6 @@ public final class PlaceholderUtil {
         return result;
     }
 
-    /**
-     * Applies placeholders to an OfflinePlayer (for head textures, etc).
-     */
     public static String apply(String input, OfflinePlayer player) {
         if (input == null) return "";
         if (player instanceof Player online) {
@@ -55,9 +48,6 @@ public final class PlaceholderUtil {
         return result;
     }
 
-    /**
-     * Applies placeholders to a list of strings.
-     */
     public static List<String> apply(List<String> input, Player player) {
         if (input == null) return new ArrayList<>();
         List<String> result = new ArrayList<>(input.size());
@@ -67,13 +57,9 @@ public final class PlaceholderUtil {
         return result;
     }
 
-    /**
-     * Built-in placeholder replacements that work without PAPI.
-     */
     private static String applyBuiltIn(String input, Player player) {
         if (player == null) return input;
-        // Use net.kyori.adventure.text.serializer.legacy to get display name as string
-        // player.displayName() returns a Component; we serialize it to a legacy string.
+        // player.displayName() returns a Component; serialize it to a legacy string for substitution
         String displayName = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer
                 .legacySection().serialize(player.displayName());
         return input

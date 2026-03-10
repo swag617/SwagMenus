@@ -20,7 +20,7 @@ public class MoneyRequirement implements Requirement {
     public boolean isMet(Player player) {
         if (player == null) return false;
         String balanceStr = PlaceholderUtil.apply("%vault_balance%", player);
-        // If PAPI/Vault not available, the placeholder won't be replaced
+        // If PAPI/Vault is absent the placeholder will not be replaced
         if (balanceStr.contains("%")) return false;
         try {
             double balance = Double.parseDouble(balanceStr.replace(",", ""));

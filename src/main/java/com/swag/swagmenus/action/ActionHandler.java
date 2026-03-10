@@ -18,29 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Parses and executes action strings.
- *
- * <p>Actions are strings with a type prefix in square brackets, e.g.:
- * <ul>
- *   <li>{@code [player] say Hello}</li>
- *   <li>{@code [console] give %player_name% diamond 1}</li>
- *   <li>{@code [message] &aYou received a diamond!}</li>
- *   <li>{@code [close]}</li>
- *   <li>{@code [open] menu_name}</li>
- *   <li>{@code [sound] ENTITY_PLAYER_LEVELUP}</li>
- *   <li>{@code [sound] ENTITY_PLAYER_LEVELUP 1.0 1.0}</li>
- *   <li>{@code [delay] 20}</li>
- *   <li>{@code [title] &6Title;&7Subtitle}</li>
- *   <li>{@code [actionbar] &aMessage}</li>
- *   <li>{@code [broadcast] Message to all}</li>
- *   <li>{@code [json] {"text":"raw json"}}</li>
- *   <li>{@code [refresh]}</li>
- *   <li>{@code [chat] /warp spawn}</li>
- *   <li>{@code [op] op %player_name%}</li>
- *   <li>{@code [openforplayer] menu_name player_name}</li>
- * </ul>
- */
 public class ActionHandler {
 
     private static final Logger LOG = Logger.getLogger("SwagMenus");
@@ -51,14 +28,6 @@ public class ActionHandler {
         this.plugin = plugin;
     }
 
-    /**
-     * Executes a list of action strings for the given player.
-     * Handles {@code [delay]} by scheduling remaining actions asynchronously.
-     *
-     * @param player  the target player
-     * @param actions list of action strings
-     * @param session optional current menu name (used for [refresh])
-     */
     public void executeActions(Player player, List<String> actions, String currentMenuName) {
         if (actions == null || actions.isEmpty()) return;
         executeFromIndex(player, actions, 0, currentMenuName);
@@ -69,7 +38,6 @@ public class ActionHandler {
             String action = actions.get(i).trim();
             if (action.isEmpty()) continue;
 
-            // Parse [type] prefix
             if (!action.startsWith("[")) {
                 // Legacy: treat as a player command
                 executeSingle(player, "[player] " + action, currentMenuName);
@@ -86,7 +54,6 @@ public class ActionHandler {
             String args = action.substring(closeBracket + 1).trim();
 
             if (type.equals("delay")) {
-                // Schedule remaining actions after delay
                 long ticks;
                 try {
                     ticks = Long.parseLong(args.trim());
@@ -101,7 +68,7 @@ public class ActionHandler {
                         executeFromIndex(player, remaining, 0, currentMenuName);
                     }
                 }, ticks);
-                return; // Don't continue the loop; the task will handle remaining
+                return;
             }
 
             executeSingle(player, action, currentMenuName);
@@ -109,7 +76,6 @@ public class ActionHandler {
     }
 
     /**
-     * Executes a single action string. Does NOT handle [delay].
      * Suppresses deprecation for {@code player.chat()} — there is no non-deprecated API
      * to send a raw chat message as a player in Paper 1.21 without triggering async chat events.
      */
@@ -130,8 +96,6 @@ public class ActionHandler {
             case "player" -> runPlayerCommand(player, args);
             case "console" -> runConsoleCommand(args);
             case "op" -> runAsOp(player, args);
-            // player.chat() is deprecated in Paper 1.21; use performChatMessage for non-command
-            // messages, or dispatchCommand for commands. We dispatch to the event system instead.
             case "chat" -> {
                 final String chatMsg = args;
                 Bukkit.getScheduler().runTask(plugin, () -> {
@@ -217,7 +181,6 @@ public class ActionHandler {
     }
 
     private void runPlayerCommand(Player player, String command) {
-        // Strip leading slash if present
         String cmd = command.startsWith("/") ? command.substring(1) : command;
         Bukkit.getScheduler().runTask(plugin, () ->
                 Bukkit.dispatchCommand(player, cmd));
@@ -246,11 +209,9 @@ public class ActionHandler {
     }
 
     private void playSound(Player player, String args) {
-        // Format: SOUND_NAME [volume] [pitch]
         String[] parts = args.trim().split("\\s+");
         if (parts.length == 0 || parts[0].isEmpty()) return;
 
-        // Use Registry.SOUNDS (Paper 1.21) to avoid deprecated Sound.valueOf()
         // Minecraft sound keys use dots (entity.player.levelup) but configs often use
         // underscores (ENTITY_PLAYER_LEVELUP). We try both forms.
         String rawInput = parts[0];
@@ -278,26 +239,22 @@ public class ActionHandler {
     }
 
     /**
-     * Resolves a Sound from a string key, supporting multiple input formats:
-     * <ul>
-     *   <li>{@code entity.player.levelup} (Minecraft format)</li>
-     *   <li>{@code ENTITY_PLAYER_LEVELUP} (legacy Bukkit enum name, uppercase)</li>
-     *   <li>{@code minecraft:entity.player.levelup} (namespaced)</li>
-     * </ul>
+     * Resolves a Sound from a string key. Accepts three formats:
+     * {@code entity.player.levelup} (Minecraft dot notation),
+     * {@code ENTITY_PLAYER_LEVELUP} (legacy Bukkit enum name — converted to dots),
+     * and {@code minecraft:entity.player.levelup} (namespaced).
      */
     private Sound resolveSoundByKey(String input) {
         String lower = input.toLowerCase();
 
-        // Try as-is (Minecraft format: entity.player.levelup)
         Sound sound = org.bukkit.Registry.SOUNDS.get(org.bukkit.NamespacedKey.minecraft(lower));
         if (sound != null) return sound;
 
-        // Try converting ENUM_NAME_FORMAT to dot.separated.format
+        // Convert ENUM_NAME_FORMAT → dot.separated.format
         String dotted = lower.replace('_', '.');
         sound = org.bukkit.Registry.SOUNDS.get(org.bukkit.NamespacedKey.minecraft(dotted));
         if (sound != null) return sound;
 
-        // Try with explicit minecraft: namespace stripped
         if (lower.startsWith("minecraft:")) {
             String stripped = lower.substring("minecraft:".length());
             sound = org.bukkit.Registry.SOUNDS.get(org.bukkit.NamespacedKey.minecraft(stripped));
@@ -308,7 +265,7 @@ public class ActionHandler {
     }
 
     private void showTitle(Player player, String args) {
-        // Format: "Title text;Subtitle text" (semicolon separator)
+        // Format: "Title text;Subtitle text"
         String[] parts = args.split(";", 2);
         Component title = ColorUtil.toComponent(parts[0].trim());
         Component subtitle = parts.length > 1 ? ColorUtil.toComponent(parts[1].trim()) : Component.empty();

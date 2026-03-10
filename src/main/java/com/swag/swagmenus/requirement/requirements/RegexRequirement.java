@@ -8,9 +8,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.logging.Logger;
 
-/**
- * Passes if the resolved input matches the given regular expression.
- */
 public class RegexRequirement implements Requirement {
 
     private static final Logger LOG = Logger.getLogger("SwagMenus");

@@ -29,11 +29,10 @@ import java.util.logging.Logger;
 /**
  * Handles all {@code /api/*} REST endpoints for the web editor.
  *
- * <p>Auth: every request must carry a valid {@code X-Auth-Token} header.
+ * Auth: every request must carry a valid {@code X-Auth-Token} header.
  * All responses are JSON. CORS headers are added for dev convenience.
  *
- * <p>Endpoints:
- * <pre>
+ * Endpoints:
  *   GET    /api/menus                 — list menu names
  *   GET    /api/menus/{name}          — get menu YAML as JSON
  *   POST   /api/menus/{name}          — create / overwrite menu
@@ -42,7 +41,6 @@ import java.util.logging.Logger;
  *   POST   /api/menus/{name}/reload   — reload menu in-game
  *   GET    /api/materials             — all valid Material names
  *   GET    /api/sounds                — all valid Sound names
- * </pre>
  */
 public class ApiHandler implements HttpHandler {
 
@@ -60,12 +58,10 @@ public class ApiHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        // CORS
         exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, X-Auth-Token");
 
-        // Handle pre-flight
         if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
             exchange.sendResponseHeaders(204, -1);
             return;
@@ -74,13 +70,11 @@ public class ApiHandler implements HttpHandler {
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod().toUpperCase();
 
-        // Login endpoint is unauthenticated
         if (path.equals("/api/login") && "POST".equals(method)) {
             handleLogin(exchange);
             return;
         }
 
-        // All other endpoints require a valid session token
         String token = exchange.getRequestHeaders().getFirst("X-Auth-Token");
         if (!auth.validate(token)) {
             sendJson(exchange, 401, mapOf("error", "Unauthorized — please log in"));
@@ -95,12 +89,7 @@ public class ApiHandler implements HttpHandler {
         }
     }
 
-    // -------------------------------------------------------------------------
-    // Routing
-    // -------------------------------------------------------------------------
-
     private void route(HttpExchange exchange, String method, String path) throws IOException {
-        // Strip /api prefix
         String sub = path.startsWith("/api") ? path.substring(4) : path;
 
         if (sub.equals("/materials") || sub.equals("/materials/")) {
@@ -115,9 +104,8 @@ public class ApiHandler implements HttpHandler {
             if ("GET".equals(method)) { handleListMenus(exchange); return; }
         }
 
-        // /menus/{name}
         if (sub.startsWith("/menus/")) {
-            String rest = sub.substring("/menus/".length()); // e.g. "mymenu" or "mymenu/reload"
+            String rest = sub.substring("/menus/".length());
 
             if (rest.endsWith("/reload")) {
                 String menuName = rest.substring(0, rest.length() - "/reload".length()).toLowerCase();
@@ -137,10 +125,6 @@ public class ApiHandler implements HttpHandler {
 
         sendJson(exchange, 404, mapOf("error", "API endpoint not found: " + path));
     }
-
-    // -------------------------------------------------------------------------
-    // Endpoint handlers
-    // -------------------------------------------------------------------------
 
     private void handleLogin(HttpExchange exchange) throws IOException {
         String body = readBody(exchange);
@@ -202,7 +186,6 @@ public class ApiHandler implements HttpHandler {
             return;
         }
 
-        // Reload on main thread
         scheduleReload(menuName);
         sendJson(exchange, 200, mapOf("status", "created", "menu", menuName));
     }
@@ -246,19 +229,14 @@ public class ApiHandler implements HttpHandler {
             sendJson(exchange, 500, mapOf("error", "Failed to delete menu file"));
             return;
         }
-        // Unload from manager on main thread
-        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-            // Remove from live menus by reloading all (safe approach, handles command cleanup)
-            plugin.getMenuManager().reloadAllMenus();
-        });
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+                plugin.getMenuManager().reloadAllMenus());
         sendJson(exchange, 200, mapOf("status", "deleted", "menu", menuName));
     }
 
     private void handleReloadMenu(HttpExchange exchange, String menuName) throws IOException {
-        // Reload must happen on the main thread
-        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
-            plugin.getMenuManager().reloadMenu(menuName);
-        });
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
+                plugin.getMenuManager().reloadMenu(menuName));
         sendJson(exchange, 200, mapOf("status", "reloading", "menu", menuName));
     }
 
@@ -280,13 +258,6 @@ public class ApiHandler implements HttpHandler {
         sendJson(exchange, 200, names);
     }
 
-    // -------------------------------------------------------------------------
-    // YAML <-> JSON conversion
-    // -------------------------------------------------------------------------
-
-    /**
-     * Walks a YamlConfiguration and produces a plain Map that Gson can serialize.
-     */
     @SuppressWarnings("unchecked")
     private Map<String, Object> yamlToMap(ConfigurationSection section) {
         Map<String, Object> map = new LinkedHashMap<>();
@@ -320,10 +291,6 @@ public class ApiHandler implements HttpHandler {
         return result;
     }
 
-    /**
-     * Applies JSON key/value pairs from a JsonObject onto a YamlConfiguration section.
-     * The {@code prefix} parameter tracks the dotted path for nested keys.
-     */
     private void applyJsonToYaml(JsonObject json, YamlConfiguration yaml, String prefix) {
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String key = prefix.isEmpty() ? entry.getKey() : prefix + "." + entry.getKey();
@@ -340,7 +307,7 @@ public class ApiHandler implements HttpHandler {
             if (prim.isBoolean()) {
                 yaml.set(key, prim.getAsBoolean());
             } else if (prim.isNumber()) {
-                // Distinguish int vs double
+                // Preserve integers where possible to avoid writing "1.0" instead of "1"
                 double d = prim.getAsDouble();
                 if (d == Math.floor(d) && !Double.isInfinite(d) && Math.abs(d) < Integer.MAX_VALUE) {
                     yaml.set(key, (int) d);
@@ -357,7 +324,6 @@ public class ApiHandler implements HttpHandler {
             }
             yaml.set(key, list);
         } else if (el.isJsonObject()) {
-            // Nested object — recurse using dotted path
             for (Map.Entry<String, JsonElement> child : el.getAsJsonObject().entrySet()) {
                 setYamlValue(yaml, key + "." + child.getKey(), child.getValue());
             }
@@ -395,10 +361,6 @@ public class ApiHandler implements HttpHandler {
         return null;
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
     private File menuFile(String menuName) {
         return new File(plugin.getMenuManager().getMenusFolder(), menuName + ".yml");
     }
@@ -414,7 +376,6 @@ public class ApiHandler implements HttpHandler {
         }
     }
 
-    /** Sends a JSON-serialized object as the response body. */
     static void sendJson(HttpExchange exchange, int status, Object payload) throws IOException {
         byte[] bytes = GSON.toJson(payload).getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=utf-8");
@@ -424,7 +385,6 @@ public class ApiHandler implements HttpHandler {
         }
     }
 
-    /** Quick map builder for single-key response objects. */
     private static Map<String, Object> mapOf(String k, Object v) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put(k, v);

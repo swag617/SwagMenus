@@ -6,15 +6,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Password-based authentication for the web editor.
+ * Password-based session authentication for the web editor.
  *
- * <p>Flow:
- * <ol>
- *   <li>Browser POSTs password to {@code /api/login}</li>
- *   <li>Server validates against config, issues a random session token</li>
- *   <li>Browser stores the token and sends it in {@code X-Auth-Token} on every request</li>
- *   <li>Tokens expire after a configurable inactivity window (sliding expiry)</li>
- * </ol>
+ * Flow: browser POSTs password to /api/login; server validates and issues a random token;
+ * browser sends that token in X-Auth-Token on every subsequent request.
+ * Tokens use a sliding expiry window — each valid request resets the timer.
  */
 public class AuthManager {
 
@@ -27,9 +23,6 @@ public class AuthManager {
         this.expiryMs = expiryMinutes * 60_000L;
     }
 
-    /**
-     * Creates a new session token (called after password is validated).
-     */
     public String createSession() {
         String token = UUID.randomUUID().toString();
         sessions.put(token, System.currentTimeMillis());
@@ -37,7 +30,7 @@ public class AuthManager {
     }
 
     /**
-     * Validates a session token. Returns true if valid, refreshing the expiry window.
+     * Returns true if the token is valid, refreshing its expiry window on success.
      */
     public boolean validate(String token) {
         if (token == null || token.isBlank()) return false;
@@ -53,11 +46,10 @@ public class AuthManager {
             return false;
         }
 
-        sessions.put(token, now); // refresh sliding window
+        sessions.put(token, now);
         return true;
     }
 
-    /** Removes all expired session tokens. */
     private void pruneExpired() {
         long now = System.currentTimeMillis();
         Iterator<Map.Entry<String, Long>> it = sessions.entrySet().iterator();

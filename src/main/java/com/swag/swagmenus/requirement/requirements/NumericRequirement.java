@@ -6,10 +6,6 @@ import org.bukkit.entity.Player;
 
 import java.util.logging.Logger;
 
-/**
- * Compares two numeric values (which can be placeholders) using standard comparison operators.
- * Supported operators: >=, >, <=, <, ==
- */
 public class NumericRequirement implements Requirement {
 
     private static final Logger LOG = Logger.getLogger("SwagMenus");

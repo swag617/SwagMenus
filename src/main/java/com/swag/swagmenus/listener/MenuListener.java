@@ -18,10 +18,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
 
-/**
- * Handles inventory interaction events for SwagMenus.
- * Cancels all clicks in managed inventories and routes to action execution.
- */
 public class MenuListener implements Listener {
 
     private final SwagMenus plugin;
@@ -41,10 +37,8 @@ public class MenuListener implements Listener {
         MenuSession session = menuManager.getSession(player);
         if (session == null) return;
 
-        // Always cancel clicks in managed inventories
         event.setCancelled(true);
 
-        // Only handle top inventory clicks (not player hotbar clicks on bottom)
         if (event.getClickedInventory() == null) return;
         if (!event.getClickedInventory().equals(session.getInventory())) return;
 
@@ -56,13 +50,11 @@ public class MenuListener implements Listener {
         MenuItem menuItem = findItemAtSlot(menu, slot);
         if (menuItem == null) return;
 
-        // Determine which action list to use based on click type
         ClickType clickType = event.getClick();
         List<String> commands = getCommandsForClick(menuItem, clickType);
 
         if (commands == null || commands.isEmpty()) return;
 
-        // Check click requirement
         boolean hasRequirement = switch (clickType) {
             case RIGHT, SHIFT_RIGHT -> menuItem.hasRightClickRequirement();
             default -> menuItem.hasLeftClickRequirement();
@@ -74,7 +66,7 @@ public class MenuListener implements Listener {
                 default -> menuItem.getLeftClickRequirement();
             };
             if (!requirement.checkAndDeny(player, actionHandler)) {
-                return; // Requirement not met; deny commands already executed
+                return;
             }
         }
 
@@ -87,7 +79,6 @@ public class MenuListener implements Listener {
         MenuSession session = menuManager.getSession(player);
         if (session == null) return;
 
-        // Cancel any drag that touches the menu inventory
         for (int slot : event.getRawSlots()) {
             if (slot < session.getMenu().getSize()) {
                 event.setCancelled(true);
@@ -107,12 +98,8 @@ public class MenuListener implements Listener {
         menuManager.handleMenuClose(event.getPlayer());
     }
 
-    /**
-     * Finds the MenuItem defined for the given slot in the menu.
-     * Returns null if no item is configured for that slot.
-     */
     private MenuItem findItemAtSlot(Menu menu, int slot) {
-        // Iterate in reverse to give priority to items defined later (override fill)
+        // Iterate in reverse to give later-defined items priority over fill items
         List<MenuItem> items = menu.getItems();
         for (int i = items.size() - 1; i >= 0; i--) {
             MenuItem item = items.get(i);
@@ -123,9 +110,6 @@ public class MenuListener implements Listener {
         return null;
     }
 
-    /**
-     * Returns the appropriate command list for the given click type.
-     */
     private List<String> getCommandsForClick(MenuItem item, ClickType clickType) {
         return switch (clickType) {
             case LEFT -> item.getLeftClickCommands();

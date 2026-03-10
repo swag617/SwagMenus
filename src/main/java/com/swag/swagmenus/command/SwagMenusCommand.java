@@ -17,18 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * The main /sm (SwagMenus) command with sub-commands.
- *
- * <p>Sub-commands:
- * <ul>
- *   <li>/sm open &lt;menu&gt; [player] — open a menu</li>
- *   <li>/sm list — list all menus</li>
- *   <li>/sm reload [menu] — reload all or one menu</li>
- *   <li>/sm execute &lt;player&gt; &lt;action&gt; — execute action on player</li>
- *   <li>/sm info &lt;menu&gt; — show menu details</li>
- * </ul>
- */
 public class SwagMenusCommand implements CommandExecutor, TabCompleter {
 
     private static final String PREFIX = "&8[&6SwagMenus&8] ";
@@ -62,10 +50,6 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
         }
         return true;
     }
-
-    // -------------------------------------------------------------------------
-    // Sub-command handlers
-    // -------------------------------------------------------------------------
 
     private void handleOpen(CommandSender sender, String[] args) {
         if (!sender.hasPermission("swagmenus.open")) {
@@ -295,10 +279,6 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ColorUtil.toComponent("&8&m                              "));
     }
 
-    // -------------------------------------------------------------------------
-    // Tab Completion
-    // -------------------------------------------------------------------------
-
     @Override
     public @Nullable List<String> onTabComplete(@NotNull CommandSender sender,
                                                 @NotNull Command command,
@@ -343,11 +323,6 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
         return new ArrayList<>();
     }
 
-    // -------------------------------------------------------------------------
-    // Helpers
-    // -------------------------------------------------------------------------
-
-    /** Builds a colored Component with the plugin prefix prepended. */
     private Component msg(String message) {
         return ColorUtil.toComponent(PREFIX + message);
     }

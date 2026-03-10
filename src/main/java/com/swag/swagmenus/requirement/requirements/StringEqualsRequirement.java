@@ -4,9 +4,6 @@ import com.swag.swagmenus.requirement.Requirement;
 import com.swag.swagmenus.util.PlaceholderUtil;
 import org.bukkit.entity.Player;
 
-/**
- * Passes if the first placeholder/value equals the second (case-insensitive).
- */
 public class StringEqualsRequirement implements Requirement {
 
     private final String input;

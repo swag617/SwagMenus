@@ -4,19 +4,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Represents a fully parsed menu definition.
- * This is the immutable template; per-player rendering happens in MenuManager.
- */
 public class Menu {
 
-    private final String name;           // filename without extension (the menu ID)
-    private final String title;          // raw title with & codes
-    private final int size;              // inventory size (9-54, multiple of 9)
+    private final String name;
+    private final String title;
+    private final int size;
     private final List<String> openCommands;
-    private final int updateInterval;    // ticks; 0 = no auto-refresh
+    private final int updateInterval; // ticks; 0 = no auto-refresh
     private final List<MenuItem> items;
-    private final MenuItem fillItem;     // optional background filler
+    private final MenuItem fillItem;
 
     private Menu(Builder builder) {
         this.name = builder.name;
@@ -64,7 +60,6 @@ public class Menu {
         public Builder fillItem(MenuItem item) { this.fillItem = item; return this; }
 
         public Menu build() {
-            // Validate size
             if (size < 9 || size > 54 || size % 9 != 0) {
                 throw new IllegalArgumentException(
                         "Invalid menu size " + size + " for menu '" + name

@@ -7,10 +7,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Represents a single item in a menu as parsed from YAML.
- * This is the template — actual ItemStack building happens per-player with placeholders applied.
- */
 public class MenuItem {
 
     private final String key;
@@ -22,8 +18,8 @@ public class MenuItem {
     private final boolean glow;
     private final int customModelData;
     private final boolean hideFlags;
-    private final String skullOwner;    // supports %placeholders%
-    private final String skullTexture;  // base64
+    private final String skullOwner;   // supports %placeholders%
+    private final String skullTexture; // base64
 
     private final List<String> leftClickCommands;
     private final List<String> rightClickCommands;
@@ -31,16 +27,13 @@ public class MenuItem {
     private final List<String> shiftRightClickCommands;
     private final List<String> middleClickCommands;
 
-    // view_requirement — if not met, item is not shown
     private final RequirementSet viewRequirement;
-    // click_requirement — if not met, deny_commands run instead of click actions
     private final RequirementSet leftClickRequirement;
     private final RequirementSet rightClickRequirement;
 
-    // Optional: item to show when view_requirement fails (instead of hiding the slot)
     private final MenuItem denyItem;
 
-    // Page this item belongs to. 0 = show on all pages (e.g. navigation/border items).
+    // page 0 = show on all pages (e.g. navigation/border items)
     private final int page;
 
     private MenuItem(Builder builder) {
@@ -87,7 +80,6 @@ public class MenuItem {
     public RequirementSet getLeftClickRequirement() { return leftClickRequirement; }
     public RequirementSet getRightClickRequirement() { return rightClickRequirement; }
     public MenuItem getDenyItem() { return denyItem; }
-
     public int getPage() { return page; }
 
     public boolean hasViewRequirement() {
@@ -127,7 +119,7 @@ public class MenuItem {
         private RequirementSet leftClickRequirement = null;
         private RequirementSet rightClickRequirement = null;
         private MenuItem denyItem = null;
-        private int page = 0; // 0 = show on all pages
+        private int page = 0;
 
         private Builder(String key, Material material) {
             this.key = key;

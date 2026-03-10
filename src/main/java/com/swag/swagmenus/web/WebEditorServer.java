@@ -13,16 +13,8 @@ import java.util.logging.Logger;
 
 /**
  * Manages the lifecycle of the embedded HTTP server for the web editor.
- *
- * <p>The server uses {@link HttpServer} from {@code com.sun.net.httpserver} — no extra
- * dependencies. It binds to {@code 0.0.0.0} so it is reachable from the network.
- *
- * <p>Routing overview:
- * <ul>
- *   <li>{@code /}, {@code /editor} → {@link StaticFileHandler}</li>
- *   <li>{@code /assets/*}          → {@link StaticFileHandler}</li>
- *   <li>{@code /api/*}             → {@link ApiHandler}</li>
- * </ul>
+ * Uses {@link HttpServer} from {@code com.sun.net.httpserver} — no extra dependencies.
+ * Binds to {@code 0.0.0.0} by default so it is reachable from the network.
  */
 public class WebEditorServer {
 
@@ -41,14 +33,6 @@ public class WebEditorServer {
         this.currentPort = plugin.getConfig().getInt("web_editor.port", 8080);
     }
 
-    // -------------------------------------------------------------------------
-    // Lifecycle
-    // -------------------------------------------------------------------------
-
-    /**
-     * Starts the HTTP server on the configured port.
-     * Safe to call multiple times (will skip if already running).
-     */
     public void start() {
         if (!plugin.getConfig().getBoolean("web_editor.enabled", true)) {
             LOG.info("Web editor is disabled in config.yml.");
@@ -72,13 +56,13 @@ public class WebEditorServer {
         StaticFileHandler staticHandler = new StaticFileHandler();
         ApiHandler apiHandler = new ApiHandler(plugin, authManager);
 
-        // Context mapping — order matters; more specific paths first
+        // More specific contexts must be registered first
         server.createContext("/api", apiHandler);
         server.createContext("/assets", staticHandler);
         server.createContext("/editor", staticHandler);
         server.createContext("/", staticHandler);
 
-        // Use a virtual-thread executor — Java 21, lightweight, no thread pool config needed
+        // Virtual threads — Java 21, no thread pool configuration needed
         server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
         server.start();
 
@@ -97,10 +81,7 @@ public class WebEditorServer {
     }
 
     /**
-     * Restarts the server on a new port. Updates {@code config.yml} with the new port.
-     *
-     * @param newPort the port to restart on (1024–65535)
-     * @throws IllegalArgumentException if the port is out of range
+     * Restarts the server on a new port and persists the change to config.yml.
      */
     public void restart(int newPort) {
         if (newPort < 1024 || newPort > 65535) {
@@ -112,10 +93,6 @@ public class WebEditorServer {
         plugin.saveConfig();
         start();
     }
-
-    // -------------------------------------------------------------------------
-    // Accessors
-    // -------------------------------------------------------------------------
 
     public int getPort() {
         return currentPort;
@@ -129,13 +106,6 @@ public class WebEditorServer {
         return server != null;
     }
 
-    // -------------------------------------------------------------------------
-    // Static response utility (used by StaticFileHandler and ApiHandler)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Sends a plain-text response. Used for error conditions where JSON is overkill.
-     */
     static void sendResponse(HttpExchange exchange, int status, String contentType, String body)
             throws IOException {
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);

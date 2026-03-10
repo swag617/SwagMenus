@@ -7,16 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * Parses requirement configuration sections into {@link Requirement} instances.
- *
- * <p>Each requirement entry in the YAML looks like:
- * <pre>
- * my_requirement:
- *   type: has_permission
- *   permission: "some.permission"
- * </pre>
- */
 public final class RequirementFactory {
 
     private static final Logger LOG = Logger.getLogger("SwagMenus");
@@ -24,12 +14,10 @@ public final class RequirementFactory {
     private RequirementFactory() {}
 
     /**
-     * Parses a {@link RequirementSet} from a configuration section.
-     * The section should contain a {@code requirements} sub-section and optionally
-     * a {@code deny_commands} list.
+     * Parses a {@link RequirementSet} from a config section. The section may contain
+     * a {@code requirements} sub-section and an optional {@code deny_commands} list.
      *
-     * @param section the config section (e.g. the value of {@code view_requirement:})
-     * @param context a string describing where this requirement is from, for error messages
+     * @param context a dotted path string used only for warning messages
      */
     public static RequirementSet parseRequirementSet(ConfigurationSection section, String context) {
         List<Requirement> requirements = new ArrayList<>();
@@ -39,10 +27,8 @@ public final class RequirementFactory {
             return new RequirementSet(requirements, denyCommands);
         }
 
-        // Parse deny_commands
         denyCommands.addAll(section.getStringList("deny_commands"));
 
-        // Parse the requirements sub-section
         ConfigurationSection reqSection = section.getConfigurationSection("requirements");
         if (reqSection != null) {
             for (String key : reqSection.getKeys(false)) {
@@ -59,9 +45,6 @@ public final class RequirementFactory {
         return new RequirementSet(requirements, denyCommands);
     }
 
-    /**
-     * Parses a single requirement from its config section.
-     */
     public static Requirement parseRequirement(ConfigurationSection section, String context) {
         String type = section.getString("type", "").trim().toLowerCase();
 

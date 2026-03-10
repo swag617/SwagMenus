@@ -4,9 +4,6 @@ import com.swag.swagmenus.requirement.Requirement;
 import com.swag.swagmenus.util.PlaceholderUtil;
 import org.bukkit.entity.Player;
 
-/**
- * Passes if the resolved input string contains the expected substring.
- */
 public class StringContainsRequirement implements Requirement {
 
     private final String input;

@@ -11,10 +11,8 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * Watches the menus folder for file creation, modification, and deletion events.
- * When a change is detected, the affected menu is reloaded on the main server thread.
- *
- * <p>Runs in a daemon thread so it doesn't block server shutdown.
+ * Watches the menus folder for file changes and reloads affected menus on the main thread.
+ * Runs in a daemon thread so it doesn't block server shutdown.
  */
 public class MenuFileWatcher implements Runnable {
 
@@ -74,7 +72,7 @@ public class MenuFileWatcher implements Runnable {
         while (running && !Thread.currentThread().isInterrupted()) {
             WatchKey key;
             try {
-                key = watchService.take(); // Blocks until an event arrives
+                key = watchService.take();
             } catch (InterruptedException | ClosedWatchServiceException e) {
                 break;
             }
@@ -93,17 +91,15 @@ public class MenuFileWatcher implements Runnable {
 
                 String menuName = fileNameStr.replace(".yml", "").toLowerCase();
 
-                // Debounce
                 long now = System.currentTimeMillis();
                 Long last = lastModified.get(menuName);
                 if (last != null && (now - last) < DEBOUNCE_MS) continue;
                 lastModified.put(menuName, now);
 
-                // Schedule reload on main thread
                 if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
                     Bukkit.getScheduler().runTask(plugin, () -> handleDelete(menuName));
                 } else {
-                    // CREATE or MODIFY — slight delay to ensure file write is complete
+                    // Slight delay to ensure the file write is complete before reading
                     Bukkit.getScheduler().runTaskLater(plugin, () -> handleChange(menuName, fileNameStr), 10L);
                 }
             }
@@ -131,8 +127,7 @@ public class MenuFileWatcher implements Runnable {
 
     private void handleDelete(String menuName) {
         if (menuManager.menuExists(menuName)) {
-            // Remove from cache — can't reload a deleted file
-            menuManager.getMenus(); // just to check existence
+            menuManager.getMenus();
             LOG.info("Menu file deleted: " + menuName + ".yml — menu removed from memory.");
             menuManager.notifyAdmins("&e[SwagMenus] Menu &6" + menuName + " &ewas deleted.");
         }

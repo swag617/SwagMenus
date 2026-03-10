@@ -3,9 +3,6 @@ package com.swag.swagmenus.requirement.requirements;
 import com.swag.swagmenus.requirement.Requirement;
 import org.bukkit.entity.Player;
 
-/**
- * Passes if the player has the specified permission node.
- */
 public class PermissionRequirement implements Requirement {
 
     private final String permission;

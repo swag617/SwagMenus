@@ -9,7 +9,6 @@ import java.util.List;
 
 /**
  * A collection of requirements evaluated with AND logic.
- * If all requirements are met, the set passes.
  * If any requirement fails, the deny_commands are executed.
  */
 public class RequirementSet {
@@ -22,9 +21,6 @@ public class RequirementSet {
         this.denyCommands = Collections.unmodifiableList(new ArrayList<>(denyCommands));
     }
 
-    /**
-     * Tests whether all requirements in this set are met for the given player.
-     */
     public boolean isMet(Player player) {
         for (Requirement requirement : requirements) {
             if (!requirement.isMet(player)) {
@@ -35,8 +31,7 @@ public class RequirementSet {
     }
 
     /**
-     * Executes the deny commands if requirements are not met.
-     * Returns true if requirements were met, false otherwise.
+     * Returns true if all requirements are met. If not, executes deny_commands and returns false.
      */
     public boolean checkAndDeny(Player player, ActionHandler actionHandler) {
         if (isMet(player)) {

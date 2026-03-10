@@ -3,9 +3,6 @@ package com.swag.swagmenus.menu;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 
-/**
- * Tracks the state of a player's currently open menu.
- */
 public class MenuSession {
 
     private final Player player;

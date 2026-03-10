@@ -12,12 +12,10 @@ import java.util.logging.Logger;
 /**
  * Serves static files embedded in the plugin JAR under {@code /webeditor/}.
  *
- * <p>Routing:
- * <ul>
- *   <li>{@code GET /} → {@code /webeditor/index.html}</li>
- *   <li>{@code GET /editor} → {@code /webeditor/index.html}</li>
- *   <li>{@code GET /assets/<file>} → {@code /webeditor/assets/<file>}</li>
- * </ul>
+ * Routing:
+ *   GET /          → /webeditor/index.html
+ *   GET /editor    → /webeditor/index.html
+ *   GET /assets/*  → /webeditor/assets/*
  */
 public class StaticFileHandler implements HttpHandler {
 
@@ -42,13 +40,11 @@ public class StaticFileHandler implements HttpHandler {
 
         String path = exchange.getRequestURI().getPath();
 
-        // Route / and /editor to index.html
         if (path.equals("/") || path.equals("/editor") || path.equals("/editor/")) {
             serveResource(exchange, "/webeditor/index.html");
             return;
         }
 
-        // Route /assets/* to webeditor/assets/*
         if (path.startsWith("/assets/")) {
             serveResource(exchange, "/webeditor" + path);
             return;

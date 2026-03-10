@@ -34,7 +34,6 @@ public class MenuOpenCommand implements CommandExecutor, TabCompleter {
                              @NotNull Command command,
                              @NotNull String label,
                              @NotNull String[] args) {
-        // /command [player]
         if (args.length == 0) {
             if (!(sender instanceof Player player)) {
                 sender.sendMessage(ColorUtil.toComponent("&cThis command can only be used by players."));
@@ -46,7 +45,6 @@ public class MenuOpenCommand implements CommandExecutor, TabCompleter {
             }
             plugin.getMenuManager().openMenu(player, menuName);
         } else {
-            // Open for another player
             if (!sender.hasPermission("swagmenus.open.others")) {
                 sender.sendMessage(ColorUtil.toComponent(
                         "&cYou don't have permission to open menus for other players."));
