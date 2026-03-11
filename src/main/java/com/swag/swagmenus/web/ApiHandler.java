@@ -84,7 +84,7 @@ public class ApiHandler implements HttpHandler {
         try {
             route(exchange, method, path);
         } catch (Exception e) {
-            LOG.warning("[SwagMenus WebEditor] Unhandled error in API handler: " + e.getMessage());
+            LOG.warning("WebEditor unhandled error in API handler: " + e.getMessage());
             sendJson(exchange, 500, mapOf("error", "Internal server error: " + e.getMessage()));
         }
     }
@@ -230,7 +230,7 @@ public class ApiHandler implements HttpHandler {
             return;
         }
         org.bukkit.Bukkit.getScheduler().runTask(plugin, () ->
-                plugin.getMenuManager().reloadAllMenus());
+                plugin.getMenuManager().removeMenu(menuName));
         sendJson(exchange, 200, mapOf("status", "deleted", "menu", menuName));
     }
 

@@ -59,12 +59,15 @@ public final class ColorUtil {
 
     /**
      * Strips all color/format codes from a string without using deprecated
-     * {@code ChatColor.stripColor}.
+     * {@code ChatColor.stripColor}. Handles both single-char codes (§c) and
+     * the seven-character hex sequences produced by {@code &#RRGGBB} (§x§R§R§G§G§B§B).
      */
     public static String strip(String input) {
         if (input == null) return "";
         String colorized = colorize(input);
-        return colorized.replaceAll("§[0-9A-Fa-fK-Ok-oRrXx]", "");
+        // Strip §x hex sequences (§x + 6 × §<char>) before stripping single codes
+        String noHex = colorized.replaceAll("§x(§[0-9A-Fa-f]){6}", "");
+        return noHex.replaceAll("§[0-9A-Fa-fK-Ok-oRrXx]", "");
     }
 
     /**

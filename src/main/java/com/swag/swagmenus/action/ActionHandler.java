@@ -235,6 +235,7 @@ public class ActionHandler {
             return;
         }
         Bukkit.getScheduler().runTask(plugin, () -> {
+            if (!player.isOnline()) return;
             try {
                 player.setOp(true);
                 String cmd = command.startsWith("/") ? command.substring(1) : command;

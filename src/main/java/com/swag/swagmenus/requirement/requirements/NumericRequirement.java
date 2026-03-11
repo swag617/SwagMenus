@@ -15,7 +15,8 @@ public class NumericRequirement implements Requirement {
         GREATER(">"),
         LESS_EQUAL("<="),
         LESS("<"),
-        EQUAL("==");
+        EQUAL("=="),
+        NOT_EQUAL("!=");
 
         private final String symbol;
 
@@ -63,10 +64,11 @@ public class NumericRequirement implements Requirement {
 
         return switch (operator) {
             case GREATER_EQUAL -> inputVal >= expectedVal;
-            case GREATER -> inputVal > expectedVal;
-            case LESS_EQUAL -> inputVal <= expectedVal;
-            case LESS -> inputVal < expectedVal;
-            case EQUAL -> inputVal == expectedVal;
+            case GREATER       -> inputVal > expectedVal;
+            case LESS_EQUAL    -> inputVal <= expectedVal;
+            case LESS          -> inputVal < expectedVal;
+            case EQUAL         -> inputVal == expectedVal;
+            case NOT_EQUAL     -> inputVal != expectedVal;
         };
     }
 

@@ -111,6 +111,7 @@ public class MenuManager {
             session.getPlayer().closeInventory();
         }
         sessions.clear();
+        navStacks.clear();
         loadAllMenus();
     }
 
@@ -268,7 +269,7 @@ public class MenuManager {
                 String tickKey = item.getKey() + "\0tick";
                 int tick = indices.getOrDefault(tickKey, 0) + period;
                 if (tick >= item.getLoreFrameSpeed()) {
-                    tick = 0;
+                    tick = tick - item.getLoreFrameSpeed();
                     frameIndex = (frameIndex + 1) % frames.size();
                     indices.put(item.getKey(), frameIndex);
                 }
