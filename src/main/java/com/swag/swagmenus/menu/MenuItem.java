@@ -36,6 +36,17 @@ public class MenuItem {
     // page 0 = show on all pages (e.g. navigation/border items)
     private final int page;
 
+    // Lore animation frames; null or empty = no animation
+    private final List<List<String>> loreFrames;
+    private final int loreFrameSpeed; // ticks between frame changes
+
+    // Chat input follow-up actions
+    private final List<String> onChatInput;
+
+    // player_list type
+    private final String type;
+    private final int slotStart;
+
     private MenuItem(Builder builder) {
         this.key = builder.key;
         this.material = builder.material;
@@ -58,6 +69,12 @@ public class MenuItem {
         this.rightClickRequirement = builder.rightClickRequirement;
         this.denyItem = builder.denyItem;
         this.page = builder.page;
+        this.loreFrames = builder.loreFrames == null ? null
+                : Collections.unmodifiableList(builder.loreFrames);
+        this.loreFrameSpeed = builder.loreFrameSpeed;
+        this.onChatInput = Collections.unmodifiableList(builder.onChatInput);
+        this.type = builder.type;
+        this.slotStart = builder.slotStart;
     }
 
     public String getKey() { return key; }
@@ -81,6 +98,13 @@ public class MenuItem {
     public RequirementSet getRightClickRequirement() { return rightClickRequirement; }
     public MenuItem getDenyItem() { return denyItem; }
     public int getPage() { return page; }
+    public List<List<String>> getLoreFrames() { return loreFrames; }
+    public int getLoreFrameSpeed() { return loreFrameSpeed; }
+    public boolean hasLoreFrames() { return loreFrames != null && !loreFrames.isEmpty(); }
+    public List<String> getOnChatInput() { return onChatInput; }
+    public String getType() { return type; }
+    public int getSlotStart() { return slotStart; }
+    public boolean isPlayerList() { return "player_list".equals(type); }
 
     public boolean hasViewRequirement() {
         return viewRequirement != null && !viewRequirement.isEmpty();
@@ -120,6 +144,11 @@ public class MenuItem {
         private RequirementSet rightClickRequirement = null;
         private MenuItem denyItem = null;
         private int page = 0;
+        private List<List<String>> loreFrames = null;
+        private int loreFrameSpeed = 20;
+        private List<String> onChatInput = new ArrayList<>();
+        private String type = null;
+        private int slotStart = 0;
 
         private Builder(String key, Material material) {
             this.key = key;
@@ -145,6 +174,11 @@ public class MenuItem {
         public Builder rightClickRequirement(RequirementSet req) { this.rightClickRequirement = req; return this; }
         public Builder denyItem(MenuItem item) { this.denyItem = item; return this; }
         public Builder page(int page) { this.page = page; return this; }
+        public Builder loreFrames(List<List<String>> frames) { this.loreFrames = frames; return this; }
+        public Builder loreFrameSpeed(int speed) { this.loreFrameSpeed = Math.max(1, speed); return this; }
+        public Builder onChatInput(List<String> cmds) { this.onChatInput = cmds; return this; }
+        public Builder type(String type) { this.type = type; return this; }
+        public Builder slotStart(int slotStart) { this.slotStart = slotStart; return this; }
 
         public MenuItem build() {
             return new MenuItem(this);

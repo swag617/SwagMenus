@@ -6,6 +6,7 @@ import com.swag.swagmenus.manager.MenuManager;
 import com.swag.swagmenus.menu.Menu;
 import com.swag.swagmenus.menu.MenuItem;
 import com.swag.swagmenus.menu.MenuSession;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -16,6 +17,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MenuListener implements Listener {
@@ -39,6 +41,7 @@ public class MenuListener implements Listener {
 
         event.setCancelled(true);
 
+        if (session.isAnimating()) return;
         if (event.getClickedInventory() == null) return;
         if (!event.getClickedInventory().equals(session.getInventory())) return;
 
@@ -51,26 +54,41 @@ public class MenuListener implements Listener {
         if (menuItem == null) return;
 
         ClickType clickType = event.getClick();
-        List<String> commands = getCommandsForClick(menuItem, clickType);
+        List<String> commands;
 
-        if (commands == null || commands.isEmpty()) return;
+        if (menuItem.isPlayerList()) {
+            // Resolve which online player was clicked
+            List<? extends Player> online = new ArrayList<>(Bukkit.getOnlinePlayers());
+            int playerIndex = slot - menuItem.getSlotStart();
+            if (playerIndex < 0 || playerIndex >= online.size()) return;
+            String targetName = online.get(playerIndex).getName();
 
-        boolean hasRequirement = switch (clickType) {
-            case RIGHT, SHIFT_RIGHT -> menuItem.hasRightClickRequirement();
-            default -> menuItem.hasLeftClickRequirement();
-        };
+            List<String> raw = getCommandsForClick(menuItem, clickType);
+            if (raw == null || raw.isEmpty()) return;
+            commands = raw.stream()
+                    .map(c -> c.replace("{player_name}", targetName))
+                    .toList();
+        } else {
+            commands = getCommandsForClick(menuItem, clickType);
+            if (commands == null || commands.isEmpty()) return;
 
-        if (hasRequirement) {
-            var requirement = switch (clickType) {
-                case RIGHT, SHIFT_RIGHT -> menuItem.getRightClickRequirement();
-                default -> menuItem.getLeftClickRequirement();
+            boolean hasRequirement = switch (clickType) {
+                case RIGHT, SHIFT_RIGHT -> menuItem.hasRightClickRequirement();
+                default -> menuItem.hasLeftClickRequirement();
             };
-            if (!requirement.checkAndDeny(player, actionHandler)) {
-                return;
+
+            if (hasRequirement) {
+                var requirement = switch (clickType) {
+                    case RIGHT, SHIFT_RIGHT -> menuItem.getRightClickRequirement();
+                    default -> menuItem.getLeftClickRequirement();
+                };
+                if (!requirement.checkAndDeny(player, actionHandler)) {
+                    return;
+                }
             }
         }
 
-        actionHandler.executeActions(player, commands, menu.getName());
+        actionHandler.executeActions(player, commands, menu.getName(), menuItem);
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -103,7 +121,13 @@ public class MenuListener implements Listener {
         List<MenuItem> items = menu.getItems();
         for (int i = items.size() - 1; i >= 0; i--) {
             MenuItem item = items.get(i);
-            if (item.getSlots().contains(slot)) {
+            if (item.isPlayerList()) {
+                int count = Bukkit.getOnlinePlayers().size();
+                int start = item.getSlotStart();
+                if (slot >= start && slot < start + count && slot < menu.getSize()) {
+                    return item;
+                }
+            } else if (item.getSlots().contains(slot)) {
                 return item;
             }
         }

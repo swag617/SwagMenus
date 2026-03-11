@@ -18,6 +18,12 @@ open_commands:
 # Auto-refresh every 60 ticks (3 seconds) — useful if items show live placeholders.
 update_interval: 60
 
+# Opening animation. Options: NONE, CASCADE, REVERSE_CASCADE, COLUMN, WIPE_RIGHT,
+# WIPE_LEFT, FROM_CENTER, FROM_EDGES, RANDOM, SPIRAL
+animation: CASCADE
+# Ticks between each animation frame (1 = fastest, higher = slower)
+animation_speed: 2
+
 # =====================================================
 # Fill Item — Fills all empty slots with this item.
 # =====================================================

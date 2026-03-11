@@ -3,11 +3,14 @@ package com.swag.swagmenus;
 import com.swag.swagmenus.action.ActionHandler;
 import com.swag.swagmenus.command.SwagMenusCommand;
 import com.swag.swagmenus.listener.MenuListener;
+import com.swag.swagmenus.manager.ChatInputManager;
 import com.swag.swagmenus.manager.MenuFileWatcher;
 import com.swag.swagmenus.manager.MenuManager;
 import com.swag.swagmenus.util.ColorUtil;
 import com.swag.swagmenus.web.WebEditorServer;
+import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -20,9 +23,11 @@ import java.util.logging.Logger;
 public class SwagMenus extends JavaPlugin {
 
     private static SwagMenus instance;
+    private static Economy economy = null;
 
     private MenuManager menuManager;
     private ActionHandler actionHandler;
+    private ChatInputManager chatInputManager;
     private MenuFileWatcher fileWatcher;
     private WebEditorServer webEditorServer;
 
@@ -39,9 +44,14 @@ public class SwagMenus extends JavaPlugin {
         saveDefaultConfig();
         generateExampleMenus();
 
+        setupEconomy(log);
+
         actionHandler = new ActionHandler(this);
         menuManager = new MenuManager(this);
         menuManager.loadAllMenus();
+
+        chatInputManager = new ChatInputManager(this);
+        getServer().getPluginManager().registerEvents(chatInputManager, this);
 
         if (getConfig().getBoolean("auto_reload_on_change", true)) {
             fileWatcher = new MenuFileWatcher(this, menuManager);
@@ -85,6 +95,21 @@ public class SwagMenus extends JavaPlugin {
         getLogger().info("Disabled.");
     }
 
+    private void setupEconomy(Logger log) {
+        if (getServer().getPluginManager().getPlugin("Vault") == null) {
+            log.info("Vault not found — economy actions will be unavailable.");
+            return;
+        }
+        RegisteredServiceProvider<Economy> rsp =
+                getServer().getServicesManager().getRegistration(Economy.class);
+        if (rsp == null) {
+            log.warning("Vault found but no Economy provider is registered.");
+            return;
+        }
+        economy = rsp.getProvider();
+        log.info("Vault Economy hooked: " + economy.getName());
+    }
+
     private void generateExampleMenus() {
         File menusFolder = new File(getDataFolder(), "menus");
         if (!menusFolder.exists()) {
@@ -110,7 +135,10 @@ public class SwagMenus extends JavaPlugin {
     }
 
     public static SwagMenus getInstance() { return instance; }
+    public static Economy getEconomy() { return economy; }
+    public static boolean isEconomyEnabled() { return economy != null; }
     public MenuManager getMenuManager() { return menuManager; }
     public ActionHandler getActionHandler() { return actionHandler; }
+    public ChatInputManager getChatInputManager() { return chatInputManager; }
     public WebEditorServer getWebEditorServer() { return webEditorServer; }
 }

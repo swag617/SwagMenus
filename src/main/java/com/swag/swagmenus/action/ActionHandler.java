@@ -1,13 +1,12 @@
 package com.swag.swagmenus.action;
 
 import com.swag.swagmenus.SwagMenus;
+import com.swag.swagmenus.menu.MenuItem;
 import com.swag.swagmenus.menu.MenuSession;
 import com.swag.swagmenus.util.ColorUtil;
 import com.swag.swagmenus.util.PlaceholderUtil;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 import net.kyori.adventure.title.Title;
 import org.bukkit.Bukkit;
 import org.bukkit.Sound;
@@ -29,18 +28,23 @@ public class ActionHandler {
     }
 
     public void executeActions(Player player, List<String> actions, String currentMenuName) {
-        if (actions == null || actions.isEmpty()) return;
-        executeFromIndex(player, actions, 0, currentMenuName);
+        executeActions(player, actions, currentMenuName, null);
     }
 
-    private void executeFromIndex(Player player, List<String> actions, int startIndex, String currentMenuName) {
+    public void executeActions(Player player, List<String> actions, String currentMenuName, MenuItem context) {
+        if (actions == null || actions.isEmpty()) return;
+        executeFromIndex(player, actions, 0, currentMenuName, context);
+    }
+
+    private void executeFromIndex(Player player, List<String> actions, int startIndex,
+                                   String currentMenuName, MenuItem context) {
         for (int i = startIndex; i < actions.size(); i++) {
             String action = actions.get(i).trim();
             if (action.isEmpty()) continue;
 
             if (!action.startsWith("[")) {
                 // Legacy: treat as a player command
-                executeSingle(player, "[player] " + action, currentMenuName);
+                executeSingle(player, "[player] " + action, currentMenuName, context);
                 continue;
             }
 
@@ -65,13 +69,20 @@ public class ActionHandler {
                 final List<String> remaining = new ArrayList<>(actions.subList(nextIndex, actions.size()));
                 Bukkit.getScheduler().runTaskLater(plugin, () -> {
                     if (player.isOnline()) {
-                        executeFromIndex(player, remaining, 0, currentMenuName);
+                        executeFromIndex(player, remaining, 0, currentMenuName, context);
                     }
                 }, ticks);
                 return;
             }
 
-            executeSingle(player, action, currentMenuName);
+            if (type.equals("chat_input")) {
+                // Everything after [chat_input] stops here; on_chat_input actions run after player types.
+                List<String> followUp = context != null ? context.getOnChatInput() : List.of();
+                plugin.getChatInputManager().await(player, args, followUp);
+                return;
+            }
+
+            executeSingle(player, action, currentMenuName, context);
         }
     }
 
@@ -80,7 +91,7 @@ public class ActionHandler {
      * to send a raw chat message as a player in Paper 1.21 without triggering async chat events.
      */
     @SuppressWarnings("deprecation")
-    private void executeSingle(Player player, String action, String currentMenuName) {
+    private void executeSingle(Player player, String action, String currentMenuName, MenuItem context) {
         if (!action.startsWith("[")) {
             runPlayerCommand(player, PlaceholderUtil.apply(action, player));
             return;
@@ -174,6 +185,32 @@ public class ActionHandler {
                     player.sendMessage(component);
                 } catch (Exception e) {
                     LOG.warning("Failed to parse JSON action: " + args + " — " + e.getMessage());
+                }
+            }
+            case "money_give" -> {
+                if (!SwagMenus.isEconomyEnabled()) {
+                    LOG.warning("[money_give] Vault Economy is not available.");
+                    break;
+                }
+                try {
+                    double amount = Double.parseDouble(args.trim());
+                    SwagMenus.getEconomy().depositPlayer(player, amount);
+                } catch (NumberFormatException e) {
+                    LOG.warning("[money_give] Invalid amount: " + args);
+                }
+            }
+            case "money_take" -> {
+                if (!SwagMenus.isEconomyEnabled()) {
+                    LOG.warning("[money_take] Vault Economy is not available.");
+                    break;
+                }
+                try {
+                    double amount = Double.parseDouble(args.trim());
+                    if (SwagMenus.getEconomy().has(player, amount)) {
+                        SwagMenus.getEconomy().withdrawPlayer(player, amount);
+                    }
+                } catch (NumberFormatException e) {
+                    LOG.warning("[money_take] Invalid amount: " + args);
                 }
             }
             default -> LOG.warning("Unknown action type '" + type + "' in action: " + action);

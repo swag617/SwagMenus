@@ -13,6 +13,8 @@ public class Menu {
     private final int updateInterval; // ticks; 0 = no auto-refresh
     private final List<MenuItem> items;
     private final MenuItem fillItem;
+    private final MenuAnimationType animationType;
+    private final int animationSpeed; // ticks between frames
 
     private Menu(Builder builder) {
         this.name = builder.name;
@@ -22,6 +24,8 @@ public class Menu {
         this.updateInterval = builder.updateInterval;
         this.items = Collections.unmodifiableList(builder.items);
         this.fillItem = builder.fillItem;
+        this.animationType = builder.animationType;
+        this.animationSpeed = builder.animationSpeed;
     }
 
     public String getName() { return name; }
@@ -31,6 +35,8 @@ public class Menu {
     public int getUpdateInterval() { return updateInterval; }
     public List<MenuItem> getItems() { return items; }
     public MenuItem getFillItem() { return fillItem; }
+    public MenuAnimationType getAnimationType() { return animationType; }
+    public int getAnimationSpeed() { return animationSpeed; }
 
     public boolean hasFillItem() { return fillItem != null; }
     public boolean hasAutoRefresh() { return updateInterval > 0; }
@@ -47,6 +53,8 @@ public class Menu {
         private int updateInterval = 0;
         private List<MenuItem> items = new ArrayList<>();
         private MenuItem fillItem = null;
+        private MenuAnimationType animationType = MenuAnimationType.NONE;
+        private int animationSpeed = 1;
 
         private Builder(String name) {
             this.name = name;
@@ -58,6 +66,8 @@ public class Menu {
         public Builder updateInterval(int ticks) { this.updateInterval = ticks; return this; }
         public Builder items(List<MenuItem> items) { this.items = items; return this; }
         public Builder fillItem(MenuItem item) { this.fillItem = item; return this; }
+        public Builder animationType(MenuAnimationType type) { this.animationType = type; return this; }
+        public Builder animationSpeed(int ticks) { this.animationSpeed = Math.max(1, ticks); return this; }
 
         public Menu build() {
             if (size < 9 || size > 54 || size % 9 != 0) {

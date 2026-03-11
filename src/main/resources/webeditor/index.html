@@ -49,6 +49,8 @@
   #sel-size { width: 90px; }
   #inp-cmd { flex: 1; min-width: 100px; max-width: 220px; }
   #inp-interval { width: 80px; }
+  #sel-animation { width: 130px; }
+  #inp-anim-speed { width: 60px; }
   .topbar-spacer { flex: 1; }
   #btn-save { background: var(--green); color: #fff; padding: 7px 20px; border-radius: var(--radius-sm); font-weight: 600; }
   #btn-save:hover { filter: brightness(1.15); }
@@ -186,6 +188,21 @@
     <input id="inp-cmd" type="text" placeholder="mymenu" title="Open command(s), comma-separated">
     <span class="topbar-label">Update (ticks)</span>
     <input id="inp-interval" type="number" min="0" value="0" title="Auto-refresh interval in ticks (0 = off)">
+    <span class="topbar-label">Animation</span>
+    <select id="sel-animation" title="Opening animation type">
+      <option value="NONE">None</option>
+      <option value="CASCADE">Cascade</option>
+      <option value="REVERSE_CASCADE">Reverse Cascade</option>
+      <option value="COLUMN">Column</option>
+      <option value="WIPE_RIGHT">Wipe Right</option>
+      <option value="WIPE_LEFT">Wipe Left</option>
+      <option value="FROM_CENTER">From Center</option>
+      <option value="FROM_EDGES">From Edges</option>
+      <option value="RANDOM">Random</option>
+      <option value="SPIRAL">Spiral</option>
+    </select>
+    <span class="topbar-label">Anim Speed</span>
+    <input id="inp-anim-speed" type="number" min="1" max="10" value="1" title="Ticks between animation frames (1 = fastest)">
     <div class="topbar-spacer"></div>
     <button id="btn-undo" title="Undo (Ctrl+Z)" style="background:transparent;color:var(--text-1);border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius-sm);font-size:14px;" disabled>&#8617;</button>
     <button id="btn-redo" title="Redo (Ctrl+Shift+Z)" style="background:transparent;color:var(--text-1);border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius-sm);font-size:14px;" disabled>&#8618;</button>
@@ -1510,6 +1527,8 @@ document.getElementById('btn-save').onclick = async () => {
   const interval = parseInt(document.getElementById('inp-interval').value) || 0;
   const cmdsRaw = document.getElementById('inp-cmd').value;
   const cmds = cmdsRaw.split(',').map(s => s.trim()).filter(Boolean);
+  const animation = document.getElementById('sel-animation').value;
+  const animationSpeed = parseInt(document.getElementById('inp-anim-speed').value) || 1;
 
   // Build items section
   const items = {};
@@ -1528,6 +1547,8 @@ document.getElementById('btn-save').onclick = async () => {
     menu_size: menuSize,
     update_interval: interval,
     open_commands: cmds,
+    animation,
+    animation_speed: animationSpeed,
     items,
   };
 
@@ -1573,6 +1594,8 @@ async function loadMenu(name) {
     if (Array.isArray(data.open_commands)) cmds = cmds.concat(data.open_commands);
     document.getElementById('inp-cmd').value = [...new Set(cmds)].join(', ');
     document.getElementById('inp-interval').value = data.update_interval || 0;
+    document.getElementById('sel-animation').value = data.animation || 'NONE';
+    document.getElementById('inp-anim-speed').value = data.animation_speed || 1;
 
     // Parse fill_item
     if (data.fill_item && typeof data.fill_item === 'object') {

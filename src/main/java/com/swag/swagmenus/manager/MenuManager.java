@@ -3,6 +3,7 @@ package com.swag.swagmenus.manager;
 import com.swag.swagmenus.SwagMenus;
 import com.swag.swagmenus.command.MenuOpenCommand;
 import com.swag.swagmenus.menu.Menu;
+import com.swag.swagmenus.menu.MenuAnimationType;
 import com.swag.swagmenus.menu.MenuItem;
 import com.swag.swagmenus.menu.MenuSession;
 import com.swag.swagmenus.requirement.RequirementFactory;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Logger;
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.stream.Collectors;
 
 public class MenuManager {
 
@@ -153,11 +155,7 @@ public class MenuManager {
             stack.push(existing.getMenu().getName());
         }
 
-        Inventory inv = buildInventory(player, menu);
-        player.openInventory(inv);
-
-        MenuSession session = new MenuSession(player, menu, inv);
-        sessions.put(player.getUniqueId(), session);
+        openMenuAnimated(player, menu);
         return true;
     }
 
@@ -183,9 +181,167 @@ public class MenuManager {
             return;
         }
 
-        Inventory inv = buildInventory(player, menu);
+        openMenuAnimated(player, menu);
+    }
+
+    /**
+     * Opens an inventory for a player and runs the opening animation if configured.
+     * For NONE, falls back to instant populate. For all other types, the inventory is
+     * opened empty and items are filled in frame-by-frame via scheduled tasks.
+     */
+    private void openMenuAnimated(Player player, Menu menu) {
+        Component title = ColorUtil.toComponent(PlaceholderUtil.apply(menu.getTitle(), player));
+        Inventory inv = Bukkit.createInventory(null, menu.getSize(), title);
         player.openInventory(inv);
-        sessions.put(player.getUniqueId(), new MenuSession(player, menu, inv));
+
+        MenuSession session = new MenuSession(player, menu, inv);
+        sessions.put(player.getUniqueId(), session);
+
+        startLoreAnimTask(session, menu, inv);
+
+        if (menu.getAnimationType() == MenuAnimationType.NONE) {
+            populateInventory(player, menu, inv);
+            return;
+        }
+
+        session.setAnimating(true);
+
+        // Snapshot the items to display now so that placeholder values are captured
+        // at open-time rather than at each frame's scheduled tick.
+        Map<Integer, ItemStack> slotMap = buildSlotMap(player, menu, session);
+
+        List<List<Integer>> groups = menu.getAnimationType().getSlotGroups(menu.getSize());
+        int speed = menu.getAnimationSpeed();
+        UUID uuid = player.getUniqueId();
+
+        for (int i = 0; i < groups.size(); i++) {
+            final List<Integer> group = groups.get(i);
+            long delay = (long) i * speed;
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                MenuSession current = sessions.get(uuid);
+                // Session gone (player closed/quit) or swapped to a different menu — abort
+                if (current == null || current.getInventory() != inv) return;
+
+                for (int slot : group) {
+                    inv.setItem(slot, slotMap.get(slot));
+                }
+            }, delay);
+        }
+
+        // Clear animating flag after the last frame
+        long totalDelay = (long) (groups.size() - 1) * speed + 1L;
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            MenuSession current = sessions.get(uuid);
+            if (current != null && current.getInventory() == inv) {
+                current.setAnimating(false);
+            }
+        }, totalDelay);
+    }
+
+    private void startLoreAnimTask(MenuSession session, Menu menu, Inventory inv) {
+        List<MenuItem> animItems = menu.getItems().stream()
+                .filter(MenuItem::hasLoreFrames)
+                .toList();
+        if (animItems.isEmpty()) return;
+
+        // Use the minimum frame speed among all animated items as the tick period.
+        int period = animItems.stream()
+                .mapToInt(MenuItem::getLoreFrameSpeed)
+                .min()
+                .orElse(20);
+
+        Player player = session.getPlayer();
+        UUID uuid = player.getUniqueId();
+
+        int taskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+            MenuSession current = sessions.get(uuid);
+            if (current == null || current.getInventory() != inv) return;
+
+            Map<String, Integer> indices = current.getLoreFrameIndices();
+            for (MenuItem item : animItems) {
+                List<List<String>> frames = item.getLoreFrames();
+                int frameIndex = indices.getOrDefault(item.getKey(), 0);
+                // Only update on the item's own speed boundary
+                // Track elapsed ticks per item via the index map value cycling
+                // Simplest: advance frame each time this task fires (using period = min speed)
+                // For per-item speed: store a tick counter in the session map keyed by key+"_tick"
+                String tickKey = item.getKey() + "\0tick";
+                int tick = indices.getOrDefault(tickKey, 0) + period;
+                if (tick >= item.getLoreFrameSpeed()) {
+                    tick = 0;
+                    frameIndex = (frameIndex + 1) % frames.size();
+                    indices.put(item.getKey(), frameIndex);
+                }
+                indices.put(tickKey, tick);
+
+                List<String> frame = frames.get(frameIndex);
+                List<Component> loreComponents = ColorUtil.toComponents(frame);
+                for (int slot : item.getSlots()) {
+                    if (slot < 0 || slot >= menu.getSize()) continue;
+                    ItemStack stack = inv.getItem(slot);
+                    if (stack == null || stack.getType() == Material.AIR) continue;
+                    ItemStack copy = stack.clone();
+                    var meta = copy.getItemMeta();
+                    if (meta != null) {
+                        meta.lore(loreComponents);
+                        copy.setItemMeta(meta);
+                    }
+                    inv.setItem(slot, copy);
+                }
+            }
+        }, period, period).getTaskId();
+
+        session.setLoreAnimTaskId(taskId);
+    }
+
+    /**
+     * Builds a slot -> ItemStack map for all visible items in the menu for the given player,
+     * used to snapshot placeholder values at open time for the animation frames.
+     */
+    private Map<Integer, ItemStack> buildSlotMap(Player player, Menu menu, MenuSession session) {
+        int currentPage = session.getCurrentPage();
+        Map<Integer, ItemStack> map = new HashMap<>();
+
+        Set<Integer> occupiedSlots = new HashSet<>();
+
+        for (MenuItem menuItem : menu.getItems()) {
+            if (menuItem.getPage() != 0 && menuItem.getPage() != currentPage) continue;
+
+            if (menuItem.hasViewRequirement()) {
+                boolean visible = menuItem.getViewRequirement().isMet(player);
+                if (!visible) {
+                    if (menuItem.getDenyItem() != null) {
+                        ItemStack denyStack = buildItemStack(player, menuItem.getDenyItem());
+                        for (int slot : menuItem.getDenyItem().getSlots()) {
+                            if (slot >= 0 && slot < menu.getSize()) {
+                                map.put(slot, denyStack);
+                                occupiedSlots.add(slot);
+                            }
+                        }
+                    }
+                    continue;
+                }
+            }
+
+            ItemStack itemStack = buildItemStack(player, menuItem);
+            for (int slot : menuItem.getSlots()) {
+                if (slot >= 0 && slot < menu.getSize()) {
+                    map.put(slot, itemStack);
+                    occupiedSlots.add(slot);
+                }
+            }
+        }
+
+        if (menu.hasFillItem()) {
+            ItemStack filler = buildItemStack(player, menu.getFillItem());
+            for (int i = 0; i < menu.getSize(); i++) {
+                if (!occupiedSlots.contains(i)) {
+                    map.put(i, filler);
+                }
+            }
+        }
+
+        return map;
     }
 
     public void refreshMenu(Player player) {
@@ -197,7 +353,10 @@ public class MenuManager {
     }
 
     public void handleMenuClose(Player player) {
-        sessions.remove(player.getUniqueId());
+        MenuSession session = sessions.remove(player.getUniqueId());
+        if (session != null && session.getLoreAnimTaskId() != -1) {
+            Bukkit.getScheduler().cancelTask(session.getLoreAnimTaskId());
+        }
         navStacks.remove(player.getUniqueId());
     }
 
@@ -227,6 +386,11 @@ public class MenuManager {
 
         for (MenuItem menuItem : menu.getItems()) {
             if (menuItem.getPage() != 0 && menuItem.getPage() != currentPage) {
+                continue;
+            }
+
+            if (menuItem.isPlayerList()) {
+                populatePlayerList(player, menu, inv, menuItem, occupiedSlots);
                 continue;
             }
 
@@ -262,6 +426,36 @@ public class MenuManager {
                     inv.setItem(i, filler);
                 }
             }
+        }
+    }
+
+    private void populatePlayerList(Player viewer, Menu menu, Inventory inv, MenuItem template,
+                                    Set<Integer> occupiedSlots) {
+        List<? extends Player> online = new ArrayList<>(Bukkit.getOnlinePlayers());
+        for (int i = 0; i < online.size(); i++) {
+            int slot = template.getSlotStart() + i;
+            if (slot < 0 || slot >= menu.getSize()) break;
+
+            Player target = online.get(i);
+            String name = target.getName();
+
+            ItemBuilder builder = new ItemBuilder(Material.PLAYER_HEAD);
+            if (!template.getDisplayName().isEmpty()) {
+                builder.name(template.getDisplayName().replace("{player_name}", name));
+            }
+            if (!template.getLore().isEmpty()) {
+                List<String> lore = template.getLore().stream()
+                        .map(l -> l.replace("{player_name}", name))
+                        .collect(Collectors.toList());
+                builder.loreStrings(lore);
+            }
+            builder.skullOwner(name)
+                   .amount(template.getAmount())
+                   .glow(template.isGlow())
+                   .hideFlags(template.isHideFlags());
+
+            inv.setItem(slot, builder.build());
+            occupiedSlots.add(slot);
         }
     }
 
@@ -318,6 +512,9 @@ public class MenuManager {
 
         menuBuilder.updateInterval(config.getInt("update_interval", 0));
 
+        menuBuilder.animationType(MenuAnimationType.fromString(config.getString("animation", "NONE")));
+        menuBuilder.animationSpeed(config.getInt("animation_speed", 1));
+
         ConfigurationSection fillSection = config.getConfigurationSection("fill_item");
         if (fillSection != null) {
             MenuItem fillItem = parseMenuItem("fill_item", fillSection, size, filePath);
@@ -369,7 +566,8 @@ public class MenuManager {
             if (resolved != null) slots.add(resolved);
         }
 
-        if (slots.isEmpty() && !key.equals("fill_item")) {
+        String itemType = section.getString("type", null);
+        if (slots.isEmpty() && !key.equals("fill_item") && !"player_list".equals(itemType)) {
             LOG.warning("Item '" + key + "' in " + filePath + " has no valid slots defined.");
         }
 
@@ -388,7 +586,33 @@ public class MenuManager {
                 .shiftLeftClickCommands(section.getStringList("shift_left_click_commands"))
                 .shiftRightClickCommands(section.getStringList("shift_right_click_commands"))
                 .middleClickCommands(section.getStringList("middle_click_commands"))
-                .page(section.getInt("page", 0));
+                .page(section.getInt("page", 0))
+                .onChatInput(section.getStringList("on_chat_input"))
+                .type(section.getString("type", null))
+                .slotStart(section.getInt("slot_start", 0))
+                .loreFrameSpeed(section.getInt("lore_frame_speed", 20));
+
+        // Parse lore_frames: list of lists
+        if (section.isList("lore_frames")) {
+            List<?> raw = section.getList("lore_frames");
+            if (raw != null) {
+                List<List<String>> frames = new ArrayList<>();
+                for (Object entry : raw) {
+                    if (entry instanceof List<?> frameList) {
+                        List<String> frame = new ArrayList<>();
+                        for (Object line : frameList) {
+                            frame.add(line.toString());
+                        }
+                        frames.add(frame);
+                    } else {
+                        frames.add(List.of(entry.toString()));
+                    }
+                }
+                if (!frames.isEmpty()) {
+                    builder.loreFrames(frames);
+                }
+            }
+        }
 
         ConfigurationSection viewReq = section.getConfigurationSection("view_requirement");
         if (viewReq != null) {
