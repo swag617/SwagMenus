@@ -19,12 +19,23 @@ import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MenuListener implements Listener {
 
     private final SwagMenus plugin;
     private final MenuManager menuManager;
     private final ActionHandler actionHandler;
+
+    // Debounces rapid double/triple-clicks on the same slot so a single spam-click can't fire
+    // an item's commands twice before the first click's effects (e.g. [money_take], [console]
+    // give) are visible — closes the economy dupe exploit noted in the audit. Keyed per
+    // player+slot rather than globally so clicking a different item immediately after isn't
+    // delayed.
+    private final Map<UUID, Map<Integer, Long>> lastClickTimes = new ConcurrentHashMap<>();
+    private static final long CLICK_COOLDOWN_MS = 300L;
 
     public MenuListener(SwagMenus plugin) {
         this.plugin = plugin;
@@ -52,6 +63,8 @@ public class MenuListener implements Listener {
 
         MenuItem menuItem = findItemAtSlot(menu, slot);
         if (menuItem == null) return;
+
+        if (isOnCooldown(player, slot)) return;
 
         ClickType clickType = event.getClick();
         List<String> commands;
@@ -109,11 +122,24 @@ public class MenuListener implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (!(event.getPlayer() instanceof Player player)) return;
         menuManager.handleMenuClose(player);
+        lastClickTimes.remove(player.getUniqueId());
     }
 
     @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         menuManager.handleMenuClose(event.getPlayer());
+        lastClickTimes.remove(event.getPlayer().getUniqueId());
+    }
+
+    /**
+     * True if this player clicked this exact slot within the last {@link #CLICK_COOLDOWN_MS}.
+     * Records the click time as a side effect (so the next click starts a fresh window).
+     */
+    private boolean isOnCooldown(Player player, int slot) {
+        long now = System.currentTimeMillis();
+        Map<Integer, Long> perSlot = lastClickTimes.computeIfAbsent(player.getUniqueId(), k -> new ConcurrentHashMap<>());
+        Long last = perSlot.put(slot, now);
+        return last != null && (now - last) < CLICK_COOLDOWN_MS;
     }
 
     private MenuItem findItemAtSlot(Menu menu, int slot) {

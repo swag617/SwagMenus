@@ -7,6 +7,7 @@ import com.swag.swagmenus.manager.ChatInputManager;
 import com.swag.swagmenus.manager.MenuFileWatcher;
 import com.swag.swagmenus.manager.MenuManager;
 import com.swag.swagmenus.util.ColorUtil;
+import com.swag.swagmenus.util.DebugLog;
 import com.swag.swagmenus.web.WebEditorServer;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.command.PluginCommand;
@@ -42,6 +43,7 @@ public class SwagMenus extends JavaPlugin {
         log.info("==============================================");
 
         saveDefaultConfig();
+        DebugLog.init(this);
         generateExampleMenus();
 
         setupEconomy(log);
@@ -59,7 +61,7 @@ public class SwagMenus extends JavaPlugin {
         }
 
         webEditorServer = new WebEditorServer(this);
-        webEditorServer.start();
+        webEditorServer.register();
 
         getServer().getPluginManager().registerEvents(new MenuListener(this), this);
 
@@ -84,7 +86,7 @@ public class SwagMenus extends JavaPlugin {
     @Override
     public void onDisable() {
         if (webEditorServer != null) {
-            webEditorServer.stop();
+            webEditorServer.unregister();
         }
         if (fileWatcher != null) {
             fileWatcher.stop();

@@ -42,12 +42,20 @@ items:
       left_click_requirements:
         requirements:
           balance:
-            type: ">="
-            placeholder: "%vault_balance%"
-            value: "100"
+            type: has_money
+            amount: 100
         deny_commands:
           - "[message] &cNeed $100!"
+
+    deny_item:                            # optional — shown instead of hiding the slot when
+      material: BARRIER                   # view_requirement fails. Same properties as a normal
+      display_name: "&cLocked"            # item. slot/slots default to this item's own slot(s)
+      lore:                               # if not specified.
+        - "&7You don't meet the requirements."
 ```
+
+See [Requirements](../requirements/index.md) for the full `view_requirement` / `click_requirement`
+syntax, including all requirement types and the `input:` field name they use for placeholders.
 
 ## Properties
 
@@ -65,6 +73,9 @@ items:
 | `page` | Integer | Page number (0 = all pages) |
 | `skull_owner` | String | Player head owner, supports placeholders |
 | `skull_texture` | String | Player head base64 texture |
+| `view_requirement` | Section | Gates whether the item is shown at all — see [Requirements](../requirements/index.md) |
+| `click_requirement` | Section | Gates whether a click's commands run — see [Requirements](../requirements/index.md) |
+| `deny_item` | Section | Item shown instead of nothing when `view_requirement` fails |
 
 ## Color Codes
 

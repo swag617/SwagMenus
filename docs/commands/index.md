@@ -11,8 +11,7 @@
 | `/sm reload <menu>` | Reload a specific menu | `swagmenus.reload` |
 | `/sm info <menu>` | Show menu details | `swagmenus.list` |
 | `/sm execute <player> <action>` | Execute an action on a player | `swagmenus.execute` |
-| `/sm editor` | Open the web editor link | `swagmenus.admin` |
-| `/sm port <number>` | Change the web editor port | `swagmenus.admin` |
+| `/sm editor` | Open the web editor link (requires SwagAPI) | `swagmenus.admin` |
 | `/<open_command>` | Open menu via its custom command | `swagmenus.open` |
 
 ## Permissions
@@ -24,7 +23,7 @@
 | `swagmenus.list` | List and inspect menus | `op` |
 | `swagmenus.reload` | Reload menus | `op` |
 | `swagmenus.execute` | Execute actions on players | `op` |
-| `swagmenus.admin` | Web editor access, port changes, admin notifications | `op` |
+| `swagmenus.admin` | Web editor access, admin notifications | `op` |
 
 ## Notes
 

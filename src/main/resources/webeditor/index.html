@@ -151,21 +151,53 @@
   .mat-misc    { background: #3a3a3a; }
   .mat-nature  { background: #2a5c2a; }
   .mat-special { background: #5c4a1c; }
+
+  /* ---- Action Builder ---- */
+  .click-tabs { display: flex; gap: 2px; margin-bottom: 8px; margin-top: 8px; }
+  .click-tab { flex: 1; padding: 5px 2px; background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; font-weight: 600; color: var(--text-2); cursor: pointer; text-align: center; transition: all var(--transition); }
+  .click-tab:hover { color: var(--text-0); background: var(--bg-4); }
+  .click-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .action-list { display: flex; flex-direction: column; gap: 4px; min-height: 20px; }
+  .action-card { display: flex; align-items: center; gap: 5px; background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 5px 6px; }
+  .action-card.drag-over-action { border-color: var(--yellow); background: var(--bg-4); }
+  .action-drag-handle { color: var(--text-2); font-size: 13px; cursor: grab; user-select: none; flex-shrink: 0; line-height: 1; }
+  .action-drag-handle:active { cursor: grabbing; }
+  .action-badge { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; white-space: nowrap; flex-shrink: 0; color: #fff; font-family: monospace; }
+  .action-fields { display: flex; flex: 1; gap: 4px; align-items: center; flex-wrap: wrap; min-width: 0; }
+  .action-field { background: var(--bg-2); border: 1px solid var(--border); color: var(--text-0); border-radius: 3px; padding: 3px 6px; font-size: 12px; font-family: inherit; outline: none; min-width: 0; }
+  .action-field:focus { border-color: var(--accent); }
+  .action-field-grow { flex: 1; }
+  .action-field-label { font-size: 11px; color: var(--text-2); flex-shrink: 0; }
+  .action-delete { background: transparent; color: var(--text-2); border: none; font-size: 16px; line-height: 1; padding: 0 2px; flex-shrink: 0; cursor: pointer; }
+  .action-delete:hover { color: var(--red); }
+  .action-add-btn { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 5px; width: 100%; background: transparent; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--text-2); font-size: 12px; cursor: pointer; transition: all var(--transition); margin-top: 4px; }
+  .action-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .action-picker { background: var(--bg-0); border: 1px solid var(--border); border-radius: var(--radius); padding: 8px; margin-top: 4px; display: none; }
+  .action-picker.open { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; }
+  .action-picker-group { grid-column: 1 / -1; font-size: 10px; font-weight: 700; color: var(--text-2); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 6px; padding-bottom: 3px; border-bottom: 1px solid var(--border); }
+  .action-picker-group:first-child { margin-top: 0; }
+  .action-picker-btn { padding: 4px 3px; background: var(--bg-3); border: 1px solid var(--border); border-left: 3px solid transparent; border-radius: var(--radius-sm); font-size: 11px; color: var(--text-1); cursor: pointer; text-align: center; transition: all var(--transition); }
+  .action-picker-btn:hover { background: var(--bg-4); color: var(--text-0); }
+
+  /* ---- Requirement Builder ---- */
+  .req-list { display: flex; flex-direction: column; gap: 6px; min-height: 4px; }
+  .req-card { background: var(--bg-3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+  .req-card-top { display: flex; gap: 6px; align-items: center; }
+  .req-card-top select { flex: 1; }
+  .req-remove { background: transparent; color: var(--text-2); border: none; font-size: 15px; line-height: 1; padding: 0 4px; flex-shrink: 0; cursor: pointer; }
+  .req-remove:hover { color: var(--red); }
+  .req-fields { display: flex; flex-direction: column; gap: 6px; }
+  .req-fields .field-group { gap: 2px; }
+  .req-fields .field-label { font-size: 10px; }
+  .req-checkbox-row { display: flex; align-items: center; gap: 6px; }
+  .req-checkbox-row input[type=checkbox] { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; }
+  .req-checkbox-row label { font-size: 12px; cursor: pointer; }
+  .req-add-btn { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 5px; width: 100%; background: transparent; border: 1px dashed var(--border); border-radius: var(--radius-sm); color: var(--text-2); font-size: 12px; cursor: pointer; transition: all var(--transition); margin-top: 6px; }
+  .req-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .req-deny { margin-top: 8px; }
 </style>
 </head>
 <body>
-
-<div id="login-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center;">
-  <div style="background:var(--bg-1); border:1px solid var(--border); border-radius:var(--radius); padding:36px 40px; width:340px; box-shadow:var(--shadow); display:flex; flex-direction:column; gap:16px;">
-    <div style="font-size:22px; font-weight:700; color:var(--accent); text-align:center;">SwagMenus</div>
-    <div style="font-size:13px; color:var(--text-1); text-align:center;">Enter your web editor password</div>
-    <input id="login-password" type="password" placeholder="Password" style="width:100%; padding:10px 12px; background:var(--bg-3); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-0); font-size:14px;"
-      onkeydown="if(event.key==='Enter') doLogin()">
-    <div id="login-error" style="color:var(--red); font-size:12px; min-height:16px; text-align:center;"></div>
-    <button id="login-btn" onclick="doLogin()" style="background:var(--accent); color:#fff; padding:10px; border-radius:var(--radius-sm); font-size:14px; font-weight:600; width:100%;">Login</button>
-    <div style="font-size:11px; color:var(--text-2); text-align:center;">Change password in <code>config.yml → web_editor.password</code></div>
-  </div>
-</div>
 
 <div id="app">
 
@@ -206,6 +238,8 @@
     <div class="topbar-spacer"></div>
     <button id="btn-undo" title="Undo (Ctrl+Z)" style="background:transparent;color:var(--text-1);border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius-sm);font-size:14px;" disabled>&#8617;</button>
     <button id="btn-redo" title="Redo (Ctrl+Shift+Z)" style="background:transparent;color:var(--text-1);border:1px solid var(--border);padding:5px 10px;border-radius:var(--radius-sm);font-size:14px;" disabled>&#8618;</button>
+    <span id="whoami" class="topbar-label"></span>
+    <a href="/logout" class="topbar-label" style="text-decoration:underline; cursor:pointer;">Logout</a>
     <div class="topbar-sep"></div>
     <div id="status-dot"></div>
     <span id="status-label">Disconnected</span>
@@ -326,48 +360,54 @@
               </select>
               <button id="btn-open-gui-add" style="background:var(--accent);color:#fff;padding:6px 12px;white-space:nowrap">Add</button>
             </div>
-            <div style="font-size:10px;color:var(--text-2)">Appends <code style="color:var(--text-1)">[open] menu_name</code> to the selected click commands box.</div>
+            <div style="font-size:10px;color:var(--text-2)">Adds an <code style="color:var(--text-1)">[open]</code> action card to the selected click tab.</div>
           </div>
 
-          <div class="field-group">
-            <label class="field-label">Left Click</label>
-            <textarea id="inp-lc" placeholder="[player] hello world" rows="2"></textarea>
+          <div class="click-tabs">
+            <button class="click-tab active" onclick="switchClickTab('lc',this)">Left</button>
+            <button class="click-tab" onclick="switchClickTab('rc',this)">Right</button>
+            <button class="click-tab" onclick="switchClickTab('slc',this)">&#8679; Left</button>
+            <button class="click-tab" onclick="switchClickTab('src',this)">&#8679; Right</button>
+            <button class="click-tab" onclick="switchClickTab('mc',this)">Middle</button>
           </div>
-          <div class="field-group">
-            <label class="field-label">Right Click</label>
-            <textarea id="inp-rc" placeholder="[console] give %player_name% diamond 1" rows="2"></textarea>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Shift Left Click</label>
-            <textarea id="inp-slc" rows="2"></textarea>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Shift Right Click</label>
-            <textarea id="inp-src" rows="2"></textarea>
-          </div>
-          <div class="field-group">
-            <label class="field-label">Middle Click</label>
-            <textarea id="inp-mc" rows="2"></textarea>
-          </div>
+
+          <div id="builder-lc" class="action-builder-wrap"></div>
+          <div id="builder-rc" class="action-builder-wrap" style="display:none"></div>
+          <div id="builder-slc" class="action-builder-wrap" style="display:none"></div>
+          <div id="builder-src" class="action-builder-wrap" style="display:none"></div>
+          <div id="builder-mc" class="action-builder-wrap" style="display:none"></div>
         </div>
 
         <div class="panel-section">
           <div class="panel-section-title">View Requirement</div>
-          <div class="field-group">
-            <label class="field-label">Type</label>
-            <select id="inp-req-type">
-              <option value="">(none)</option>
-              <option value="has_permission">has_permission</option>
-              <option value="has_money">has_money</option>
-              <option value="string_equals">string_equals</option>
-              <option value="string_contains">string_contains</option>
-              <option value="regex_matches">regex_matches</option>
-              <option value="javascript">javascript</option>
-            </select>
+          <div class="field-hint" style="margin-bottom:6px">All requirements below must pass (AND) for this item to be visible. Leave empty for no gating.</div>
+          <div id="req-view-rows" class="req-list"></div>
+          <button type="button" class="req-add-btn" onclick="addRequirementRow('view')">+ Add Requirement</button>
+          <div class="field-group req-deny">
+            <label class="field-label">Deny Commands</label>
+            <textarea id="req-view-deny" placeholder="[message] &cNo permission!" rows="2"></textarea>
           </div>
-          <div class="field-group" id="req-input-group" style="display:none">
-            <label class="field-label" id="req-input-label">Value</label>
-            <input id="inp-req-value" type="text" placeholder="">
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Click Requirement — Left Click</div>
+          <div class="field-hint" style="margin-bottom:6px">Must pass before this item's left-click commands run.</div>
+          <div id="req-lc-rows" class="req-list"></div>
+          <button type="button" class="req-add-btn" onclick="addRequirementRow('lc')">+ Add Requirement</button>
+          <div class="field-group req-deny">
+            <label class="field-label">Deny Commands</label>
+            <textarea id="req-lc-deny" placeholder="[message] &cYou can't do that!" rows="2"></textarea>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <div class="panel-section-title">Click Requirement — Right Click</div>
+          <div class="field-hint" style="margin-bottom:6px">Must pass before this item's right-click commands run.</div>
+          <div id="req-rc-rows" class="req-list"></div>
+          <button type="button" class="req-add-btn" onclick="addRequirementRow('rc')">+ Add Requirement</button>
+          <div class="field-group req-deny">
+            <label class="field-label">Deny Commands</label>
+            <textarea id="req-rc-deny" placeholder="[message] &cYou can't do that!" rows="2"></textarea>
           </div>
         </div>
 
@@ -396,12 +436,22 @@
   </div>
 </div>
 
+<!-- Sound datalist for action builder autocomplete -->
+<datalist id="sound-list-ab"></datalist>
+
 <script>
 // ============================================================
 // Config
 // ============================================================
-const API = '/api';
-let AUTH_TOKEN = sessionStorage.getItem('swagmenus_token') || '';
+// Login is handled entirely by SwagAPI's shared session cookie — by the time this page
+// loads, SwagAPI has already authenticated the visitor (or auth is disabled). See
+// /swagapi/auth/status and /login?redirect=... for the shared auth contract.
+//
+// API_BASE is derived from the current directory this page was served from (e.g.
+// "/swagapi/swagmenus/") so requests resolve correctly regardless of what prefix
+// SwagAPI's IWebService mounts this module under.
+const API_BASE = window.location.pathname.replace(/[^/]*$/, '');
+const API = API_BASE + 'api';
 
 // ============================================================
 // State
@@ -516,12 +566,18 @@ function matAbbrev(name) {
 // API helpers
 // ============================================================
 async function apiFetch(path, opts = {}) {
-  const headers = { 'X-Auth-Token': AUTH_TOKEN, ...(opts.headers || {}) };
+  // 'Accept: application/json' asks SwagAPI's session gate for a 401 JSON response
+  // instead of a 302 redirect to /login when the session is missing/expired.
+  const headers = { 'Accept': 'application/json', ...(opts.headers || {}) };
   if (opts.body && typeof opts.body === 'object') {
     headers['Content-Type'] = 'application/json';
     opts.body = JSON.stringify(opts.body);
   }
-  const res = await fetch(API + path, { ...opts, headers });
+  const res = await fetch(API + path, { ...opts, headers, credentials: 'include' });
+  if (res.status === 401 || res.status === 302) {
+    window.location = '/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+    throw new Error('Unauthorized');
+  }
   return res;
 }
 
@@ -600,48 +656,480 @@ document.getElementById('modal-cancel').onclick = () => {
 };
 
 // ============================================================
-// Login
+// Identity — "Signed in as X" (SwagAPI shared auth; never redirects)
 // ============================================================
-function showLogin() {
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-overlay').style.display = 'flex';
-  document.getElementById('login-password').focus();
+function loadWhoAmI() {
+  fetch('/swagapi/auth/status', { credentials: 'include' })
+    .then(r => r.json())
+    .then(d => {
+      const el = document.getElementById('whoami');
+      if (el) el.textContent = d.username ? ('Signed in as ' + d.username) : '';
+    })
+    .catch(() => {});
 }
 
-function hideLogin() {
-  document.getElementById('login-overlay').style.display = 'none';
-  document.getElementById('app').style.display = 'grid';
+// ============================================================
+// Action Builder — definitions and constants
+// ============================================================
+const CLICK_TYPES = ['lc', 'rc', 'slc', 'src', 'mc'];
+let activeClickTab = 'lc';
+
+const ACTION_DEFS = [
+  // Menu group
+  { type: 'open',       label: 'Open Menu',     color: '#5865f2', group: 'Menu',    fields: [{key:'menu', type:'menu', placeholder:'menu_name', grow:true}] },
+  { type: 'close',      label: 'Close',         color: '#72767d', group: 'Menu',    fields: [] },
+  { type: 'back',       label: 'Back',          color: '#72767d', group: 'Menu',    fields: [] },
+  { type: 'refresh',    label: 'Refresh',       color: '#4752c4', group: 'Menu',    fields: [] },
+  { type: 'nextpage',   label: 'Next Page',     color: '#4752c4', group: 'Menu',    fields: [] },
+  { type: 'prevpage',   label: 'Prev Page',     color: '#4752c4', group: 'Menu',    fields: [] },
+  // Command group
+  { type: 'player',     label: 'Player Cmd',    color: '#3ba55d', group: 'Command', fields: [{key:'cmd', type:'text', placeholder:'/command or message', grow:true}] },
+  { type: 'console',    label: 'Console Cmd',   color: '#ed4245', group: 'Command', fields: [{key:'cmd', type:'text', placeholder:'give %player_name% diamond 1', grow:true}] },
+  { type: 'op',         label: 'OP Command',    color: '#faa61a', group: 'Command', fields: [{key:'cmd', type:'text', placeholder:'/command', grow:true}] },
+  // Chat group
+  { type: 'message',    label: 'Message',       color: '#57f287', group: 'Chat',    fields: [{key:'text', type:'text', placeholder:'&aHello!', grow:true}] },
+  { type: 'broadcast',  label: 'Broadcast',     color: '#eb459e', group: 'Chat',    fields: [{key:'text', type:'text', placeholder:'&eAnnouncement!', grow:true}] },
+  { type: 'chat',       label: 'Chat',          color: '#3ba55d', group: 'Chat',    fields: [{key:'text', type:'text', placeholder:'message', grow:true}] },
+  // Visual group
+  { type: 'title',      label: 'Title',         color: '#eb459e', group: 'Visual',  fields: [{key:'title', type:'text', placeholder:'Title text', grow:true}, {key:'subtitle', type:'text', placeholder:'Subtitle text', grow:true}] },
+  { type: 'actionbar',  label: 'Action Bar',    color: '#faa61a', group: 'Visual',  fields: [{key:'text', type:'text', placeholder:'Action bar msg', grow:true}] },
+  { type: 'sound',      label: 'Sound',         color: '#faa61a', group: 'Visual',  fields: [{key:'sound', type:'sound', placeholder:'ENTITY_PLAYER_LEVELUP', grow:true}, {key:'vol', type:'num', placeholder:'1', width:'52px'}, {key:'pitch', type:'num', placeholder:'1', width:'52px'}] },
+  // Flow group
+  { type: 'delay',      label: 'Delay',         color: '#b9bbbe', group: 'Flow',    fields: [{key:'ticks', type:'num', placeholder:'20', width:'70px'}, {label:'ticks', type:'label'}] },
+  { type: 'chat_input', label: 'Chat Input',    color: '#5865f2', group: 'Flow',    fields: [{key:'prompt', type:'text', placeholder:'Enter a value...', grow:true}] },
+  // Economy group
+  { type: 'money_give', label: 'Give Money',    color: '#3ba55d', group: 'Economy', fields: [{key:'amount', type:'num', placeholder:'100', width:'80px'}, {label:'$', type:'label'}] },
+  { type: 'money_take', label: 'Take Money',    color: '#ed4245', group: 'Economy', fields: [{key:'amount', type:'num', placeholder:'100', width:'80px'}, {label:'$', type:'label'}] },
+  // Advanced group
+  { type: 'json',       label: 'Raw JSON',      color: '#72767d', group: 'Advanced',fields: [{key:'json', type:'text', placeholder:'{"text":"..."}', grow:true}] },
+];
+
+// Map type string -> def for fast lookup
+const ACTION_DEF_MAP = {};
+for (const d of ACTION_DEFS) ACTION_DEF_MAP[d.type] = d;
+
+// ============================================================
+// Action Builder — parse / serialize
+// ============================================================
+
+// "[open] mainmenu" -> { type: 'open', args: 'mainmenu' }
+// "[close]"         -> { type: 'close', args: '' }
+function parseActionString(str) {
+  str = str.trim();
+  const m = str.match(/^\[([^\]]+)\]\s*(.*)/s);
+  if (!m) return null;
+  return { type: m[1].trim(), args: m[2].trim() };
 }
 
-async function doLogin() {
-  const pw = document.getElementById('login-password').value;
-  const err = document.getElementById('login-error');
-  const btn = document.getElementById('login-btn');
-  err.textContent = '';
-  btn.disabled = true;
-  btn.textContent = 'Logging in...';
-  try {
-    const res = await fetch(API + '/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password: pw })
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      err.textContent = data.error || 'Login failed';
-      document.getElementById('login-password').value = '';
-      document.getElementById('login-password').focus();
-      return;
+// Given a def and raw args string, return { key: value } object for each keyed field
+function parseArgsForDef(def, args) {
+  const values = {};
+  if (!def || !args) return values;
+
+  const keyedFields = def.fields.filter(f => f.key);
+
+  if (def.type === 'sound') {
+    // "ENTITY_PLAYER_LEVELUP 1.0 0.5"  — sound [vol [pitch]]
+    const parts = args.split(/\s+/);
+    if (parts[0]) values['sound'] = parts[0];
+    if (parts[1]) values['vol']   = parts[1];
+    if (parts[2]) values['pitch'] = parts[2];
+  } else if (def.type === 'title') {
+    // "Title text;Subtitle text"
+    const idx = args.indexOf(';');
+    if (idx === -1) {
+      values['title'] = args;
+      values['subtitle'] = '';
+    } else {
+      values['title']    = args.slice(0, idx);
+      values['subtitle'] = args.slice(idx + 1);
     }
-    AUTH_TOKEN = data.token;
-    sessionStorage.setItem('swagmenus_token', AUTH_TOKEN);
-    hideLogin();
-    init();
-  } catch (e) {
-    err.textContent = 'Could not reach server: ' + e.message;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Login';
+  } else if (keyedFields.length === 1) {
+    // Single keyed field gets the entire args string
+    values[keyedFields[0].key] = args;
+  }
+  // Zero-field types (close, back, refresh, etc.) need no parsing
+
+  return values;
+}
+
+// Read field values from a card DOM element, return "[type] args" string
+function serializeActionCard(cardEl) {
+  const type = cardEl.dataset.actionType;
+  if (type === '__raw__') {
+    const inp = cardEl.querySelector('.action-field');
+    return inp ? inp.value.trim() : '';
+  }
+
+  const def = ACTION_DEF_MAP[type];
+  if (!def) return '';
+
+  if (def.type === 'sound') {
+    const sound = (cardEl.querySelector('[data-field="sound"]') || {}).value || '';
+    const vol   = (cardEl.querySelector('[data-field="vol"]')   || {}).value || '';
+    const pitch = (cardEl.querySelector('[data-field="pitch"]') || {}).value || '';
+    let args = sound.trim();
+    if (vol.trim())   args += ' ' + vol.trim();
+    if (pitch.trim()) args += ' ' + pitch.trim();
+    return args ? `[sound] ${args}` : '[sound]';
+  }
+
+  if (def.type === 'title') {
+    const title    = (cardEl.querySelector('[data-field="title"]')    || {}).value || '';
+    const subtitle = (cardEl.querySelector('[data-field="subtitle"]') || {}).value || '';
+    const args = title + ';' + subtitle;
+    return `[title] ${args}`;
+  }
+
+  const keyedFields = def.fields.filter(f => f.key);
+  if (keyedFields.length === 0) {
+    return `[${type}]`;
+  }
+
+  if (keyedFields.length === 1) {
+    const inp = cardEl.querySelector(`[data-field="${keyedFields[0].key}"]`);
+    const val = inp ? inp.value.trim() : '';
+    return val ? `[${type}] ${val}` : `[${type}]`;
+  }
+
+  // Multi-field fallback: join non-empty values with spaces
+  const parts = [];
+  for (const f of keyedFields) {
+    const inp = cardEl.querySelector(`[data-field="${f.key}"]`);
+    if (inp && inp.value.trim()) parts.push(inp.value.trim());
+  }
+  return parts.length ? `[${type}] ${parts.join(' ')}` : `[${type}]`;
+}
+
+// ============================================================
+// Action Builder — DOM construction
+// ============================================================
+
+function buildActionBuilderDOM() {
+  for (const ct of CLICK_TYPES) {
+    const wrap = document.getElementById('builder-' + ct);
+    if (!wrap) continue;
+    wrap.innerHTML = '';
+
+    // Action list
+    const list = document.createElement('div');
+    list.className = 'action-list';
+    list.id = 'list-' + ct;
+    wrap.appendChild(list);
+
+    // Add button
+    const addBtn = document.createElement('button');
+    addBtn.className = 'action-add-btn';
+    addBtn.textContent = '+ Add Action';
+    addBtn.type = 'button';
+    addBtn.onclick = () => toggleActionPicker(ct);
+    wrap.appendChild(addBtn);
+
+    // Picker
+    const picker = document.createElement('div');
+    picker.className = 'action-picker';
+    picker.id = 'picker-' + ct;
+    buildPickerContent(picker, ct);
+    wrap.appendChild(picker);
+  }
+}
+
+function buildPickerContent(picker, ct) {
+  // Group defs by group field
+  const groups = {};
+  const groupOrder = [];
+  for (const def of ACTION_DEFS) {
+    if (!groups[def.group]) { groups[def.group] = []; groupOrder.push(def.group); }
+    groups[def.group].push(def);
+  }
+
+  for (const groupName of groupOrder) {
+    const header = document.createElement('div');
+    header.className = 'action-picker-group';
+    header.textContent = groupName;
+    picker.appendChild(header);
+
+    for (const def of groups[groupName]) {
+      const btn = document.createElement('button');
+      btn.className = 'action-picker-btn';
+      btn.type = 'button';
+      btn.textContent = def.label;
+      btn.style.borderLeftColor = def.color;
+      btn.onclick = () => {
+        snapshot();
+        addActionCard(ct, def.type, {});
+        closeActionPicker(ct);
+      };
+      picker.appendChild(btn);
+    }
+  }
+}
+
+function toggleActionPicker(ct) {
+  const picker = document.getElementById('picker-' + ct);
+  if (!picker) return;
+  picker.classList.toggle('open');
+}
+
+function closeActionPicker(ct) {
+  const picker = document.getElementById('picker-' + ct);
+  if (picker) picker.classList.remove('open');
+}
+
+// Append a typed action card to list-{ct}. values is a { key: value } map of initial field values.
+function addActionCard(ct, type, values) {
+  const list = document.getElementById('list-' + ct);
+  if (!list) return;
+
+  const def = ACTION_DEF_MAP[type];
+  const color = def ? def.color : '#72767d';
+
+  const card = document.createElement('div');
+  card.className = 'action-card';
+  card.dataset.actionType = type;
+  card.setAttribute('draggable', 'true');
+
+  // Drag handle
+  const handle = document.createElement('span');
+  handle.className = 'action-drag-handle';
+  handle.textContent = '\u2807';
+  handle.title = 'Drag to reorder';
+  card.appendChild(handle);
+
+  // Badge
+  const badge = document.createElement('span');
+  badge.className = 'action-badge';
+  badge.textContent = '[' + type + ']';
+  badge.style.background = color;
+  card.appendChild(badge);
+
+  // Fields area
+  const fieldsWrap = document.createElement('div');
+  fieldsWrap.className = 'action-fields';
+
+  if (def && def.fields.length > 0) {
+    for (const fieldDef of def.fields) {
+      if (fieldDef.type === 'label') {
+        const lbl = document.createElement('span');
+        lbl.className = 'action-field-label';
+        lbl.textContent = fieldDef.label || '';
+        fieldsWrap.appendChild(lbl);
+        continue;
+      }
+
+      const inp = document.createElement('input');
+      inp.className = 'action-field' + (fieldDef.grow ? ' action-field-grow' : '');
+      inp.placeholder = fieldDef.placeholder || '';
+      inp.dataset.field = fieldDef.key;
+
+      if (fieldDef.type === 'num') {
+        inp.type = 'number';
+        inp.min = '0';
+      } else {
+        inp.type = 'text';
+      }
+
+      if (fieldDef.width) {
+        inp.style.width = fieldDef.width;
+        inp.style.flexShrink = '0';
+        inp.style.flexGrow = '0';
+      }
+
+      if (fieldDef.type === 'sound') {
+        inp.setAttribute('list', 'sound-list-ab');
+      }
+
+      if (fieldDef.type === 'menu') {
+        // Populate datalist of menu names for autocomplete
+        inp.setAttribute('list', 'material-list-menus-' + ct);
+        // We'll use a dedicated datalist per ct to avoid ID collisions
+        let dl = document.getElementById('material-list-menus-' + ct);
+        if (!dl) {
+          dl = document.createElement('datalist');
+          dl.id = 'material-list-menus-' + ct;
+          document.body.appendChild(dl);
+          // Populate from state.menus
+          for (const mname of state.menus) {
+            const opt = document.createElement('option');
+            opt.value = mname;
+            dl.appendChild(opt);
+          }
+        }
+      }
+
+      // Set initial value if provided
+      if (values && fieldDef.key && values[fieldDef.key] !== undefined) {
+        inp.value = values[fieldDef.key];
+      }
+
+      fieldsWrap.appendChild(inp);
+    }
+  }
+  card.appendChild(fieldsWrap);
+
+  // Delete button
+  const del = document.createElement('button');
+  del.className = 'action-delete';
+  del.type = 'button';
+  del.textContent = '\u00d7';
+  del.title = 'Remove action';
+  del.onclick = () => { snapshot(); card.remove(); };
+  card.appendChild(del);
+
+  // Drag-and-drop reorder within list
+  attachActionCardDrag(card, list);
+
+  list.appendChild(card);
+}
+
+// Fallback card for unknown action types (shows raw text input)
+function addRawActionCard(ct, rawStr) {
+  const list = document.getElementById('list-' + ct);
+  if (!list) return;
+
+  const card = document.createElement('div');
+  card.className = 'action-card';
+  card.dataset.actionType = '__raw__';
+  card.setAttribute('draggable', 'true');
+
+  // Drag handle
+  const handle = document.createElement('span');
+  handle.className = 'action-drag-handle';
+  handle.textContent = '\u2807';
+  card.appendChild(handle);
+
+  // Badge
+  const badge = document.createElement('span');
+  badge.className = 'action-badge';
+  badge.textContent = '[raw]';
+  badge.style.background = '#72767d';
+  card.appendChild(badge);
+
+  // Single text input containing the full raw string
+  const fieldsWrap = document.createElement('div');
+  fieldsWrap.className = 'action-fields';
+  const inp = document.createElement('input');
+  inp.type = 'text';
+  inp.className = 'action-field action-field-grow';
+  inp.value = rawStr;
+  inp.placeholder = '[type] args...';
+  fieldsWrap.appendChild(inp);
+  card.appendChild(fieldsWrap);
+
+  // Delete button
+  const del = document.createElement('button');
+  del.className = 'action-delete';
+  del.type = 'button';
+  del.textContent = '\u00d7';
+  del.title = 'Remove action';
+  del.onclick = () => { snapshot(); card.remove(); };
+  card.appendChild(del);
+
+  attachActionCardDrag(card, list);
+  list.appendChild(card);
+}
+
+// HTML5 drag reorder for action cards within the same list
+function attachActionCardDrag(card, list) {
+  card.addEventListener('dragstart', (e) => {
+    card.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', '');
+  });
+
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    list.querySelectorAll('.action-card').forEach(c => c.classList.remove('drag-over-action'));
+  });
+
+  card.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const dragging = list.querySelector('.action-card.dragging');
+    if (!dragging || dragging === card) return;
+    card.classList.add('drag-over-action');
+    // Determine insert position based on mouse Y
+    const rect = card.getBoundingClientRect();
+    const midY = rect.top + rect.height / 2;
+    if (e.clientY < midY) {
+      list.insertBefore(dragging, card);
+    } else {
+      list.insertBefore(dragging, card.nextSibling);
+    }
+  });
+
+  card.addEventListener('dragleave', () => {
+    card.classList.remove('drag-over-action');
+  });
+
+  card.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    card.classList.remove('drag-over-action');
+  });
+}
+
+// ============================================================
+// Action Builder — load / collect
+// ============================================================
+
+// Clears list-{ct} and populates it from an array of "[type] args" command strings
+function loadActionsIntoBuilder(ct, cmds) {
+  const list = document.getElementById('list-' + ct);
+  if (!list) return;
+  list.innerHTML = '';
+
+  for (const cmd of cmds) {
+    if (!cmd || !cmd.trim()) continue;
+    const parsed = parseActionString(cmd);
+    if (!parsed) {
+      // Not a bracketed action — treat as raw
+      addRawActionCard(ct, cmd);
+      continue;
+    }
+
+    const def = ACTION_DEF_MAP[parsed.type];
+    if (!def) {
+      addRawActionCard(ct, cmd);
+      continue;
+    }
+
+    const values = parseArgsForDef(def, parsed.args);
+    addActionCard(ct, def.type, values);
+  }
+}
+
+// Returns an array of "[type] args" strings from list-{ct}
+function collectActionsFromBuilder(ct) {
+  const list = document.getElementById('list-' + ct);
+  if (!list) return [];
+  const results = [];
+  for (const card of list.querySelectorAll('.action-card')) {
+    const str = serializeActionCard(card);
+    if (str) results.push(str);
+  }
+  return results;
+}
+
+// ============================================================
+// Action Builder — tab switching
+// ============================================================
+function switchClickTab(ct, tabEl) {
+  activeClickTab = ct;
+
+  // Update tab button styles
+  if (tabEl) {
+    const allTabs = tabEl.closest('.click-tabs');
+    if (allTabs) {
+      allTabs.querySelectorAll('.click-tab').forEach(t => t.classList.remove('active'));
+    }
+    tabEl.classList.add('active');
+  }
+
+  // Show/hide builder wraps
+  for (const c of CLICK_TYPES) {
+    const wrap = document.getElementById('builder-' + c);
+    if (wrap) wrap.style.display = c === ct ? '' : 'none';
   }
 }
 
@@ -650,7 +1138,7 @@ async function doLogin() {
 // ============================================================
 async function init() {
   setStatus(false);
-  // Check auth by calling /api/menus
+  loadWhoAmI();
   try {
     const menus = await apiGet('/menus');
     state.menus = menus;
@@ -658,11 +1146,7 @@ async function init() {
     setStatus(true);
     renderMenuList();
   } catch (e) {
-    if (e.message.includes('401')) {
-      showLogin();
-    } else {
-      toast('Could not connect to SwagMenus server: ' + e.message, 'error');
-    }
+    toast('Could not connect to SwagMenus server: ' + e.message, 'error');
     setStatus(false);
     return;
   }
@@ -678,6 +1162,21 @@ async function init() {
       dl.appendChild(opt);
     }
   } catch (_) {}
+
+  // Preload sounds into the action builder datalist
+  try {
+    state.sounds = await apiGet('/sounds');
+    const sdl = document.getElementById('sound-list-ab');
+    sdl.innerHTML = '';
+    for (const s of state.sounds) {
+      const opt = document.createElement('option');
+      opt.value = s;
+      sdl.appendChild(opt);
+    }
+  } catch (_) {}
+
+  // Build the action builder DOM for all 5 click types
+  buildActionBuilderDOM();
 }
 
 function setStatus(ok) {
@@ -850,16 +1349,10 @@ function loadBlankEditor(slot) {
   document.getElementById('chk-hide').checked = false;
   document.getElementById('inp-skull').value = '';
   document.getElementById('inp-cmd-data').value = 0;
-  document.getElementById('inp-lc').value = '';
-  document.getElementById('inp-rc').value = '';
-  document.getElementById('inp-slc').value = '';
-  document.getElementById('inp-src').value = '';
-  document.getElementById('inp-mc').value = '';
-  document.getElementById('inp-req-type').value = '';
-  document.getElementById('inp-req-value').value = '';
+  for (const ct of CLICK_TYPES) loadActionsIntoBuilder(ct, []);
+  clearRequirementUI();
   updateColorPreviews();
   updateSkullVisibility();
-  updateReqVisibility();
 }
 
 function loadItemIntoEditor(slot, item) {
@@ -873,28 +1366,45 @@ function loadItemIntoEditor(slot, item) {
   document.getElementById('chk-hide').checked = !!item.hide_flags;
   document.getElementById('inp-skull').value = item.skull_owner || '';
   document.getElementById('inp-cmd-data').value = item.custom_model_data || 0;
-  document.getElementById('inp-lc').value = (item.left_click_commands || []).join('\n');
-  document.getElementById('inp-rc').value = (item.right_click_commands || []).join('\n');
-  document.getElementById('inp-slc').value = (item.shift_left_click_commands || []).join('\n');
-  document.getElementById('inp-src').value = (item.shift_right_click_commands || []).join('\n');
-  document.getElementById('inp-mc').value = (item.middle_click_commands || []).join('\n');
+
+  loadActionsIntoBuilder('lc',  item.left_click_commands        || []);
+  loadActionsIntoBuilder('rc',  item.right_click_commands       || []);
+  loadActionsIntoBuilder('slc', item.shift_left_click_commands  || []);
+  loadActionsIntoBuilder('src', item.shift_right_click_commands || []);
+  loadActionsIntoBuilder('mc',  item.middle_click_commands      || []);
 
   // Requirements
-  const req = item.view_requirement;
-  if (req && req.type) {
-    document.getElementById('inp-req-type').value = req.type;
-    document.getElementById('inp-req-value').value = req.value || req.permission || req.input || req.expression || '';
-  } else {
-    document.getElementById('inp-req-type').value = '';
-    document.getElementById('inp-req-value').value = '';
-  }
+  const viewReq = parseRequirementSetFromBackend(item.view_requirement);
+  renderRequirementRows('view', viewReq.rows);
+  document.getElementById('req-view-deny').value = viewReq.deny.join('\n');
+
+  const clickReq = item.click_requirement || {};
+  // click_requirement may nest left/right under their own keys, or (a documented fallback)
+  // put the left-click requirements directly under click_requirement itself.
+  const leftSource = clickReq.left_click_requirements
+      || (clickReq.requirements ? clickReq : null);
+  const leftReq = parseRequirementSetFromBackend(leftSource);
+  renderRequirementRows('lc', leftReq.rows);
+  document.getElementById('req-lc-deny').value = leftReq.deny.join('\n');
+
+  const rightReq = parseRequirementSetFromBackend(clickReq.right_click_requirements);
+  renderRequirementRows('rc', rightReq.rows);
+  document.getElementById('req-rc-deny').value = rightReq.deny.join('\n');
 
   updateColorPreviews();
   updateSkullVisibility();
-  updateReqVisibility();
 }
 
 function collectEditorItem() {
+  // Start from the previously-loaded item (if editing an existing one) so fields the editor UI
+  // doesn't model — page, deny_item, lore_frames/lore_frame_speed, on_chat_input, skull_texture,
+  // type/slot_start (player_list) — round-trip untouched instead of being silently discarded on
+  // save. Only the fields the UI actually edits below are overwritten.
+  const oldItem = (!fillItemMode && state.selectedSlot !== null) ? state.items[state.selectedSlot] : null;
+  const item = oldItem ? { ...oldItem } : {};
+  delete item._key;
+  delete item._slots;
+
   const slotsRaw = document.getElementById('inp-slots').value;
   const slots = slotsRaw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
   const material = document.getElementById('inp-material').value.trim().toUpperCase() || 'STONE';
@@ -906,33 +1416,43 @@ function collectEditorItem() {
   const hideFlags = document.getElementById('chk-hide').checked;
   const skullOwner = document.getElementById('inp-skull').value.trim() || null;
   const customModelData = parseInt(document.getElementById('inp-cmd-data').value) || 0;
-  const lc = textareaToList('inp-lc');
-  const rc = textareaToList('inp-rc');
-  const slc = textareaToList('inp-slc');
-  const src = textareaToList('inp-src');
-  const mc = textareaToList('inp-mc');
 
-  const reqType = document.getElementById('inp-req-type').value;
-  const reqValue = document.getElementById('inp-req-value').value.trim();
+  const lc  = collectActionsFromBuilder('lc');
+  const rc  = collectActionsFromBuilder('rc');
+  const slc = collectActionsFromBuilder('slc');
+  const src = collectActionsFromBuilder('src');
+  const mc  = collectActionsFromBuilder('mc');
 
-  const item = {
-    material,
-    slots,
-    display_name: displayName,
-    lore,
-    amount,
-    glow,
-    hide_flags: hideFlags,
-    custom_model_data: customModelData,
-  };
-  if (skullOwner) item.skull_owner = skullOwner;
-  if (lc.length) item.left_click_commands = lc;
-  if (rc.length) item.right_click_commands = rc;
-  if (slc.length) item.shift_left_click_commands = slc;
-  if (src.length) item.shift_right_click_commands = src;
-  if (mc.length) item.middle_click_commands = mc;
-  if (reqType) {
-    item.view_requirement = { type: reqType, value: reqValue };
+  const viewReqSet = collectRequirementSet('view');
+  const lcReqSet = collectRequirementSet('lc');
+  const rcReqSet = collectRequirementSet('rc');
+
+  item.material = material;
+  item.slots = slots;
+  item.display_name = displayName;
+  item.lore = lore;
+  item.amount = amount;
+  item.glow = glow;
+  item.hide_flags = hideFlags;
+  item.custom_model_data = customModelData;
+
+  if (skullOwner) item.skull_owner = skullOwner; else delete item.skull_owner;
+
+  if (lc.length)  item.left_click_commands        = lc;  else delete item.left_click_commands;
+  if (rc.length)  item.right_click_commands       = rc;  else delete item.right_click_commands;
+  if (slc.length) item.shift_left_click_commands  = slc; else delete item.shift_left_click_commands;
+  if (src.length) item.shift_right_click_commands = src; else delete item.shift_right_click_commands;
+  if (mc.length)  item.middle_click_commands      = mc;  else delete item.middle_click_commands;
+
+  if (viewReqSet) item.view_requirement = viewReqSet; else delete item.view_requirement;
+
+  if (lcReqSet || rcReqSet) {
+    const clickReq = {};
+    if (lcReqSet) clickReq.left_click_requirements = lcReqSet;
+    if (rcReqSet) clickReq.right_click_requirements = rcReqSet;
+    item.click_requirement = clickReq;
+  } else {
+    delete item.click_requirement;
   }
 
   return { slots, item };
@@ -947,12 +1467,18 @@ document.getElementById('btn-open-gui-add').onclick = () => {
   const menu = document.getElementById('sel-open-gui').value;
   if (!menu) { toast('Select a menu first.', 'error'); return; }
 
-  const clickMap = { lc: 'inp-lc', rc: 'inp-rc', slc: 'inp-slc', src: 'inp-src', mc: 'inp-mc' };
-  const targetId = clickMap[document.getElementById('sel-open-gui-click').value];
-  const ta = document.getElementById(targetId);
-  const action = `[open] ${menu}`;
-  ta.value = ta.value ? ta.value.trimEnd() + '\n' + action : action;
-  ta.focus();
+  const ct = document.getElementById('sel-open-gui-click').value;
+  snapshot();
+  addActionCard(ct, 'open', { menu });
+
+  // Switch to the relevant tab so the user can see the added card
+  const allTabs = document.querySelector('.click-tabs');
+  if (allTabs) {
+    const tabIndex = CLICK_TYPES.indexOf(ct);
+    const tabBtns = allTabs.querySelectorAll('.click-tab');
+    if (tabBtns[tabIndex]) switchClickTab(ct, tabBtns[tabIndex]);
+  }
+
   toast(`Added [open] ${menu}`, 'success');
 };
 
@@ -1025,25 +1551,234 @@ function updateSkullVisibility() {
 document.getElementById('inp-material').addEventListener('input', updateSkullVisibility);
 
 // ============================================================
-// Requirement visibility
+// Requirement builder (View Requirement / Click Requirement)
+//
+// Emits the exact nested shape RequirementFactory.parseRequirementSet() expects:
+//   { requirements: { <key>: { type, <type-specific fields> } }, deny_commands: [...] }
+// using the backend's literal type strings (some contain spaces, e.g. "string equals") and
+// field names (e.g. "input" for the placeholder being compared, matching the Java parser —
+// not "placeholder", which earlier docs used but the code never read).
 // ============================================================
-function updateReqVisibility() {
-  const type = document.getElementById('inp-req-type').value;
-  const group = document.getElementById('req-input-group');
-  const label = document.getElementById('req-input-label');
-  if (!type) { group.style.display = 'none'; return; }
-  group.style.display = '';
-  const labels = {
-    'has_permission': 'Permission Node',
-    'has_money': 'Amount',
-    'string_equals': 'Input = Value',
-    'string_contains': 'Input contains Value',
-    'regex_matches': 'Regex Pattern',
-    'javascript': 'JavaScript Expression',
-  };
-  label.textContent = labels[type] || 'Value';
+const REQ_TYPE_DEFS = {
+  'has_permission': { label: 'Has Permission', fields: [
+    { key: 'permission', label: 'Permission Node', type: 'text', placeholder: 'my.permission.node' },
+  ]},
+  'has_money': { label: 'Has Money', fields: [
+    { key: 'amount', label: 'Amount', type: 'number', placeholder: '500' },
+  ]},
+  'expression': { label: 'Expression', fields: [
+    { key: 'expression', label: 'Expression', type: 'text', placeholder: '%player_level% >= 10' },
+  ]},
+  'string equals': { label: 'String Equals', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_world%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: 'survival' },
+    { key: 'case_sensitive', label: 'Case Sensitive', type: 'checkbox' },
+  ]},
+  'string contains': { label: 'String Contains', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%luckperms_prefix%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: 'VIP' },
+    { key: 'case_sensitive', label: 'Case Sensitive', type: 'checkbox' },
+  ]},
+  'regex matches': { label: 'Regex Matches', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_name%' },
+    { key: 'regex', label: 'Regex Pattern', type: 'text', placeholder: '^[A-Z].*' },
+  ]},
+  '>=': { label: 'Numeric >=', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_level%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: '10' },
+  ]},
+  '>': { label: 'Numeric >', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_level%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: '10' },
+  ]},
+  '<=': { label: 'Numeric <=', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_level%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: '10' },
+  ]},
+  '<': { label: 'Numeric <', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_level%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: '10' },
+  ]},
+  '==': { label: 'Numeric ==', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_level%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: '10' },
+  ]},
+  '!=': { label: 'Numeric !=', fields: [
+    { key: 'input', label: 'Input (placeholder)', type: 'text', placeholder: '%player_level%' },
+    { key: 'value', label: 'Value', type: 'text', placeholder: '10' },
+  ]},
+};
+const REQ_TYPE_ORDER = ['has_permission', 'has_money', 'expression', 'string equals',
+  'string contains', 'regex matches', '>=', '>', '<=', '<', '==', '!='];
+
+function createRequirementRowEl(containerKey, rowData) {
+  rowData = rowData || { type: '' };
+
+  const card = document.createElement('div');
+  card.className = 'req-card';
+
+  const top = document.createElement('div');
+  top.className = 'req-card-top';
+
+  const select = document.createElement('select');
+  select.className = 'req-type-select';
+  const blankOpt = document.createElement('option');
+  blankOpt.value = '';
+  blankOpt.textContent = '— select type —';
+  select.appendChild(blankOpt);
+  for (const t of REQ_TYPE_ORDER) {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = REQ_TYPE_DEFS[t].label + '  [' + t + ']';
+    select.appendChild(opt);
+  }
+  select.value = REQ_TYPE_DEFS[rowData.type] ? rowData.type : '';
+  top.appendChild(select);
+
+  const removeBtn = document.createElement('button');
+  removeBtn.type = 'button';
+  removeBtn.className = 'req-remove';
+  removeBtn.textContent = '✕';
+  removeBtn.title = 'Remove requirement';
+  removeBtn.onclick = () => card.remove();
+  top.appendChild(removeBtn);
+
+  card.appendChild(top);
+
+  const fieldsWrap = document.createElement('div');
+  fieldsWrap.className = 'req-fields';
+  card.appendChild(fieldsWrap);
+
+  function renderFields() {
+    fieldsWrap.innerHTML = '';
+    const def = REQ_TYPE_DEFS[select.value];
+    if (!def) return;
+    for (const f of def.fields) {
+      if (f.type === 'checkbox') {
+        const row = document.createElement('div');
+        row.className = 'req-checkbox-row';
+        const chk = document.createElement('input');
+        chk.type = 'checkbox';
+        chk.dataset.field = f.key;
+        chk.id = 'chk-' + containerKey + '-' + f.key + '-' + Math.random().toString(36).slice(2);
+        chk.checked = !!rowData[f.key];
+        const lbl = document.createElement('label');
+        lbl.textContent = f.label;
+        lbl.htmlFor = chk.id;
+        row.appendChild(chk);
+        row.appendChild(lbl);
+        fieldsWrap.appendChild(row);
+      } else {
+        const group = document.createElement('div');
+        group.className = 'field-group';
+        const lbl = document.createElement('label');
+        lbl.className = 'field-label';
+        lbl.textContent = f.label;
+        const inp = document.createElement('input');
+        inp.type = f.type === 'number' ? 'number' : 'text';
+        inp.dataset.field = f.key;
+        inp.placeholder = f.placeholder || '';
+        const existing = rowData[f.key];
+        if (existing !== undefined && existing !== null) inp.value = existing;
+        group.appendChild(lbl);
+        group.appendChild(inp);
+        fieldsWrap.appendChild(group);
+      }
+    }
+  }
+  select.addEventListener('change', renderFields);
+  renderFields();
+
+  return card;
 }
-document.getElementById('inp-req-type').addEventListener('change', updateReqVisibility);
+
+function addRequirementRow(containerKey, rowData) {
+  const container = document.getElementById('req-' + containerKey + '-rows');
+  if (!container) return;
+  container.appendChild(createRequirementRowEl(containerKey, rowData || { type: '' }));
+}
+
+function renderRequirementRows(containerKey, rows) {
+  const container = document.getElementById('req-' + containerKey + '-rows');
+  if (!container) return;
+  container.innerHTML = '';
+  for (const row of (rows || [])) {
+    container.appendChild(createRequirementRowEl(containerKey, row));
+  }
+}
+
+function clearRequirementUI() {
+  for (const ck of ['view', 'lc', 'rc']) {
+    renderRequirementRows(ck, []);
+    const denyEl = document.getElementById('req-' + ck + '-deny');
+    if (denyEl) denyEl.value = '';
+  }
+}
+
+// Reads the UI rows + deny-commands textarea for a container ('view'|'lc'|'rc') and produces
+// the backend's nested RequirementSet shape. Returns null if there are no requirement rows and
+// no deny commands (i.e. "no gating" — matches how an absent view_requirement/click_requirement
+// section is interpreted server-side).
+function collectRequirementSet(containerKey) {
+  const container = document.getElementById('req-' + containerKey + '-rows');
+  const denyCommands = document.getElementById('req-' + containerKey + '-deny')
+      ? textareaToList('req-' + containerKey + '-deny') : [];
+
+  const requirements = {};
+  let count = 0;
+  if (container) {
+    for (const card of container.querySelectorAll('.req-card')) {
+      const type = card.querySelector('.req-type-select').value;
+      if (!type || !REQ_TYPE_DEFS[type]) continue;
+      const def = REQ_TYPE_DEFS[type];
+      const entry = { type };
+      for (const f of def.fields) {
+        const fieldEl = card.querySelector(`[data-field="${f.key}"]`);
+        if (!fieldEl) continue;
+        if (f.type === 'checkbox') {
+          entry[f.key] = fieldEl.checked;
+        } else {
+          const val = fieldEl.value.trim();
+          if (val !== '') entry[f.key] = val;
+        }
+      }
+      count++;
+      requirements['req_' + count] = entry;
+    }
+  }
+
+  if (count === 0 && denyCommands.length === 0) return null;
+
+  const result = { requirements };
+  if (denyCommands.length) result.deny_commands = denyCommands;
+  return result;
+}
+
+// Converts a backend RequirementSet ({requirements:{key:{type,...}}, deny_commands:[...]})
+// loaded from YAML into the row-array shape the UI editor understands. Also tolerates the old,
+// broken web-editor shape ({type, value}) that earlier versions of this plugin wrote (a
+// non-functional no-op requirement — see the audit's Bug #1) so a previously-saved-but-dead
+// requirement can be re-edited into a working one instead of silently vanishing from the UI.
+function parseRequirementSetFromBackend(reqSet) {
+  if (!reqSet || typeof reqSet !== 'object') return { rows: [], deny: [] };
+
+  const deny = Array.isArray(reqSet.deny_commands) ? reqSet.deny_commands : [];
+
+  if (reqSet.requirements && typeof reqSet.requirements === 'object') {
+    const rows = [];
+    for (const entry of Object.values(reqSet.requirements)) {
+      if (entry && typeof entry === 'object') rows.push({ ...entry });
+    }
+    return { rows, deny };
+  }
+
+  // Legacy/broken shape written by earlier editor versions: { type, value }
+  if (reqSet.type) {
+    return { rows: [{ ...reqSet }], deny };
+  }
+
+  return { rows: [], deny };
+}
 
 // ============================================================
 // Size change — rebuild grid
@@ -1268,20 +2003,14 @@ function enterFillItemMode() {
     document.getElementById('chk-hide').checked = !!fi.hide_flags;
     document.getElementById('inp-skull').value = fi.skull_owner || '';
     document.getElementById('inp-cmd-data').value = fi.custom_model_data || 0;
-    document.getElementById('inp-lc').value = '';
-    document.getElementById('inp-rc').value = '';
-    document.getElementById('inp-slc').value = '';
-    document.getElementById('inp-src').value = '';
-    document.getElementById('inp-mc').value = '';
-    document.getElementById('inp-req-type').value = '';
-    document.getElementById('inp-req-value').value = '';
+    for (const ct of CLICK_TYPES) loadActionsIntoBuilder(ct, []);
+    clearRequirementUI();
   } else {
     loadBlankEditor(null);
     document.getElementById('inp-material').value = 'GRAY_STAINED_GLASS_PANE';
   }
   updateColorPreviews();
   updateSkullVisibility();
-  updateReqVisibility();
   showItemEditor();
 }
 

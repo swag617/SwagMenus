@@ -29,8 +29,9 @@ import java.util.logging.Logger;
 /**
  * Handles all {@code /api/*} REST endpoints for the web editor.
  *
- * Auth: every request must carry a valid {@code X-Auth-Token} header.
- * All responses are JSON. CORS headers are added for dev convenience.
+ * Auth: none — this handler only ever runs after SwagAPI's shared session-cookie login
+ * has already authenticated the request (see {@link com.swag.swagmenus.web.WebEditorServer}).
+ * All responses are JSON.
  *
  * Endpoints:
  *   GET    /api/menus                 — list menu names
@@ -49,40 +50,21 @@ public class ApiHandler implements HttpHandler {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private final SwagMenus plugin;
-    private final AuthManager auth;
 
-    public ApiHandler(SwagMenus plugin, AuthManager auth) {
+    public ApiHandler(SwagMenus plugin) {
         this.plugin = plugin;
-        this.auth = auth;
     }
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type, X-Auth-Token");
-
-        if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
-            exchange.sendResponseHeaders(204, -1);
-            return;
-        }
-
         String path = exchange.getRequestURI().getPath();
         String method = exchange.getRequestMethod().toUpperCase();
 
-        if (path.equals("/api/login") && "POST".equals(method)) {
-            handleLogin(exchange);
-            return;
-        }
-
-        String token = exchange.getRequestHeaders().getFirst("X-Auth-Token");
-        if (!auth.validate(token)) {
-            sendJson(exchange, 401, mapOf("error", "Unauthorized — please log in"));
-            return;
-        }
-
         try {
             route(exchange, method, path);
+        } catch (IllegalArgumentException e) {
+            // menuFile() throws this for path traversal or invalid menu names
+            sendJson(exchange, 400, mapOf("error", "Bad request: " + e.getMessage()));
         } catch (Exception e) {
             LOG.warning("WebEditor unhandled error in API handler: " + e.getMessage());
             sendJson(exchange, 500, mapOf("error", "Internal server error: " + e.getMessage()));
@@ -124,28 +106,6 @@ public class ApiHandler implements HttpHandler {
         }
 
         sendJson(exchange, 404, mapOf("error", "API endpoint not found: " + path));
-    }
-
-    private void handleLogin(HttpExchange exchange) throws IOException {
-        String body = readBody(exchange);
-        JsonObject json;
-        try {
-            json = JsonParser.parseString(body).getAsJsonObject();
-        } catch (JsonSyntaxException | IllegalStateException e) {
-            sendJson(exchange, 400, mapOf("error", "Invalid JSON"));
-            return;
-        }
-
-        String submitted = json.has("password") ? json.get("password").getAsString() : "";
-        String correct = plugin.getConfig().getString("web_editor.password", "admin");
-
-        if (!submitted.equals(correct)) {
-            sendJson(exchange, 401, mapOf("error", "Incorrect password"));
-            return;
-        }
-
-        String token = auth.createSession();
-        sendJson(exchange, 200, mapOf("token", token));
     }
 
     private void handleListMenus(HttpExchange exchange) throws IOException {
@@ -361,8 +321,36 @@ public class ApiHandler implements HttpHandler {
         return null;
     }
 
+    /**
+     * Resolves the menu file for the given name, rejecting any name that would escape
+     * the menus folder via path traversal (e.g. "../config").
+     *
+     * @throws IllegalArgumentException if the name contains path separators or resolves
+     *         outside the menus directory.
+     */
     private File menuFile(String menuName) {
-        return new File(plugin.getMenuManager().getMenusFolder(), menuName + ".yml");
+        // Reject names containing path separators or the parent-directory token
+        if (menuName.contains("/") || menuName.contains("\\") || menuName.contains("..")) {
+            throw new IllegalArgumentException("Invalid menu name: " + menuName);
+        }
+        // Allow only alphanumerics, hyphens, and underscores
+        if (!menuName.matches("[a-z0-9_\\-]+")) {
+            throw new IllegalArgumentException("Menu name contains illegal characters: " + menuName);
+        }
+        File folder = plugin.getMenuManager().getMenusFolder();
+        File file = new File(folder, menuName + ".yml");
+        // Canonical path check as a final defence against OS-level traversal tricks
+        try {
+            String canonical = file.getCanonicalPath();
+            String folderCanonical = folder.getCanonicalPath();
+            if (!canonical.startsWith(folderCanonical + File.separator)
+                    && !canonical.equals(folderCanonical)) {
+                throw new IllegalArgumentException("Resolved path escapes menus folder: " + menuName);
+            }
+        } catch (java.io.IOException e) {
+            throw new IllegalArgumentException("Could not resolve path for menu: " + menuName);
+        }
+        return file;
     }
 
     private void scheduleReload(String menuName) {

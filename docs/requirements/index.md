@@ -17,9 +17,8 @@ click_requirement:
   left_click_requirements:
     requirements:
       balance_check:
-        type: ">="
-        placeholder: "%vault_balance%"
-        value: "100"
+        type: has_money
+        amount: 100
     deny_commands:
       - "[message] &cYou need at least $100!"
   right_click_requirements:
@@ -50,17 +49,19 @@ amount: 500
 ```
 
 ### Numeric Comparisons
-Compares a placeholder value numerically. Supported operators: `>=`, `>`, `<=`, `<`, `==`, `!=`
+Compares a placeholder value numerically. Supported operators: `>=`, `>`, `<=`, `<`, `==`, `!=`.
+The placeholder goes in the `input:` field (not `placeholder:` — this must match the actual
+YAML key the parser reads).
 
 ```yaml
 type: ">="
-placeholder: "%player_level%"
+input: "%player_level%"
 value: "10"
 ```
 
 ```yaml
 type: "=="
-placeholder: "%statistic_player_kills%"
+input: "%statistic_player_kills%"
 value: "100"
 ```
 
@@ -73,30 +74,33 @@ expression: "%player_level% >= 10"
 ```
 
 ### string equals
-Checks if two placeholder values are equal (case-sensitive).
+Checks if a resolved placeholder value equals another value. Case-insensitive by default;
+set `case_sensitive: true` to require an exact-case match.
 
 ```yaml
 type: string equals
-placeholder: "%player_world%"
+input: "%player_world%"
 value: "survival"
+case_sensitive: false
 ```
 
 ### string contains
-Checks if a placeholder value contains a string.
+Checks if a resolved placeholder value contains a string.
 
 ```yaml
 type: string contains
-placeholder: "%luckperms_prefix%"
+input: "%luckperms_prefix%"
 value: "VIP"
+case_sensitive: false
 ```
 
 ### regex matches
-Matches a placeholder value against a regular expression.
+Matches a resolved placeholder value against a regular expression.
 
 ```yaml
 type: regex matches
-placeholder: "%player_name%"
-value: "^[A-Z].*"
+input: "%player_name%"
+regex: "^[A-Z].*"
 ```
 
 ## Multiple Requirements
@@ -111,8 +115,39 @@ view_requirement:
       permission: "rank.vip"
     needs_level:
       type: ">="
-      placeholder: "%player_level%"
+      input: "%player_level%"
       value: "20"
   deny_commands:
     - "[message] &cRequires VIP rank and level 20!"
 ```
+
+## Showing a Different Item Instead of Hiding It
+
+By default, an item whose `view_requirement` fails just doesn't appear — the slot is empty (or
+shows the fill item, if one is configured). If you'd rather show a "locked" placeholder item
+instead, add a `deny_item:` block alongside `view_requirement:`:
+
+```yaml
+items:
+  vip_kit:
+    material: DIAMOND
+    slot: 13
+    display_name: "&bVIP Kit"
+    view_requirement:
+      requirements:
+        vip_check:
+          type: has_permission
+          permission: "rank.vip"
+
+    deny_item:
+      material: BARRIER
+      display_name: "&cVIP Only"
+      lore:
+        - "&7Requires VIP rank."
+      # slot/slots are optional here — if omitted, the deny item automatically
+      # uses the same slot(s) as the item it's replacing.
+```
+
+`deny_item` accepts the same properties as a normal item (material, display_name, lore, glow,
+click commands, etc). It is only shown when the parent item's `view_requirement` fails — it has
+no effect on `click_requirement`.

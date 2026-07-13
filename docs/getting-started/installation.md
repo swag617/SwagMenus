@@ -5,6 +5,7 @@
 - **Paper 1.21.x** — Spigot is not supported
 - **Java 21** or higher
 - **PlaceholderAPI** *(optional but recommended)*
+- **SwagAPI** *(optional — required only for the [web editor](../web-editor/overview.md))*
 
 ## Steps
 
@@ -35,9 +36,13 @@ You should see this in your console on startup:
 
 ```
 [SwagMenus] Loaded 2 menu(s).
-[SwagMenus] Web editor started on port 8080
+[SwagMenus] Web editor registered at http://your.server:port/swagapi/swagmenus/
 [SwagMenus] Enabled successfully.
 ```
+
+The web editor line only appears if [SwagAPI](https://github.com/swag617/SwagAPI) is installed and
+enabled — SwagMenus works fine without it, you just won't have the browser-based editor (menus can
+still be hand-authored as YAML in `plugins/SwagMenus/menus/`).
 
 ## PlaceholderAPI
 

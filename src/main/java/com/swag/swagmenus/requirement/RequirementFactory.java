@@ -92,7 +92,7 @@ public final class RequirementFactory {
                 yield new RegexRequirement(input, regex);
             }
 
-            case ">=", ">", "<=", "<", "==" -> {
+            case ">=", ">", "<=", "<", "==", "!=" -> {
                 String input = section.getString("input", "");
                 String value = section.getString("value", "0");
                 try {

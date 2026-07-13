@@ -1,6 +1,7 @@
 package com.swag.swagmenus.requirement;
 
 import com.swag.swagmenus.action.ActionHandler;
+import com.swag.swagmenus.util.DebugLog;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -24,6 +25,8 @@ public class RequirementSet {
     public boolean isMet(Player player) {
         for (Requirement requirement : requirements) {
             if (!requirement.isMet(player)) {
+                DebugLog.log("Requirement '" + requirement.getType() + "' failed for "
+                        + (player != null ? player.getName() : "null player"));
                 return false;
             }
         }

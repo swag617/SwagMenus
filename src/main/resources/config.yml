@@ -21,18 +21,11 @@ debug: false
 # =====================================================
 web_editor:
   # Enable or disable the web editor entirely.
+  # Requires the SwagAPI plugin to be installed and enabled — the web editor is served
+  # through SwagAPI's shared web server at /swagapi/swagmenus/ (see /sm editor).
+  # Login is handled by SwagAPI's own shared session system; there is no separate
+  # password for the web editor.
   enabled: true
-  # Port the embedded HTTP server listens on.
-  # Change with: /sm port <number>  (range 1024-65535)
-  port: 8080
-  # Address to bind to.
-  # 0.0.0.0 = all interfaces (accessible from network)
-  # 127.0.0.1 = localhost only
-  bind-address: "0.0.0.0"
-  # Password to log into the web editor. Change this!
-  password: "admin"
-  # Session token lifetime in minutes (inactivity-based expiry).
-  token_expiry_minutes: 30
 
 # =====================================================
 # Messages

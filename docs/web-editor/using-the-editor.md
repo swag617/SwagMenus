@@ -27,8 +27,30 @@ The **top bar** contains the menu title, size selector, open command, update int
 - **Glow / Hide Flags / Amount** — checkboxes and number inputs
 - **Skull Owner** — visible only when material is `PLAYER_HEAD`
 - **Click Commands** — one action per line for each click type
+- **View Requirement** — requirements that gate whether the item is shown at all
+- **Click Requirement (Left / Right)** — requirements that gate whether that click's commands run
 
 Click **Apply to Slot** to confirm, or **Remove** to delete the item.
+
+### View / Click Requirements
+
+Each requirement section (View, Left Click, Right Click) works the same way:
+
+1. Click **+ Add Requirement** to add a row
+2. Pick a requirement type from the dropdown — the fields below it change to match (e.g.
+   `has_permission` shows a Permission Node field, `string equals` shows Input/Value/Case
+   Sensitive fields)
+3. Add as many rows as you need — all of them must pass (AND logic)
+4. Optionally fill in **Deny Commands** — actions run when the requirement(s) fail (for View
+   Requirement, this usually isn't visible to the player since the item just doesn't show; it's
+   mainly useful for Click Requirement, e.g. `[message] &cYou can't afford that!`)
+
+See [Requirements](../requirements/index.md) for what each requirement type checks.
+
+> **Note:** Fields the editor doesn't have dedicated controls for yet — `page`, `deny_item`,
+> `lore_frames`, `on_chat_input`, `skull_texture`, and the `player_list` item type — are preserved
+> as-is when you edit an item through the editor; they just aren't visually editable, so use the
+> YAML file directly for those.
 
 ## Open GUI Dropdown
 

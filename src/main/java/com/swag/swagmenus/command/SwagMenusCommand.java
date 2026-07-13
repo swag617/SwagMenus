@@ -44,7 +44,6 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
             case "execute" -> handleExecute(sender, args);
             case "info" -> handleInfo(sender, args);
             case "editor" -> handleEditor(sender);
-            case "port" -> handlePort(sender, args);
             case "help" -> sendHelp(sender);
             default -> sender.sendMessage(msg("&cUnknown sub-command. Use &e/sm help&c for help."));
         }
@@ -199,24 +198,17 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
         }
 
         var webServer = plugin.getWebEditorServer();
-        if (webServer == null || !webServer.isRunning()) {
-            sender.sendMessage(msg("&cThe web editor server is not running. Check console for errors."));
+        if (webServer == null || !webServer.isRegistered()) {
+            sender.sendMessage(msg("&cThe web editor is not available. Make sure SwagAPI is installed, "
+                    + "enabled, and &eweb_editor.enabled &cis true in config.yml."));
             return;
         }
 
-        int port = webServer.getPort();
-
-        // Prefer server-ip from server.properties, fall back to local host address
-        String serverIp = plugin.getServer().getIp();
-        if (serverIp == null || serverIp.isBlank()) {
-            try {
-                serverIp = java.net.InetAddress.getLocalHost().getHostAddress();
-            } catch (java.net.UnknownHostException e) {
-                serverIp = "localhost";
-            }
+        String url = webServer.getUrl();
+        if (url == null) {
+            sender.sendMessage(msg("&cCould not resolve the web editor URL."));
+            return;
         }
-
-        String url = "http://" + serverIp + ":" + port + "/editor";
 
         sender.sendMessage(msg("&aWeb editor is running! Click the link below to open it:"));
 
@@ -226,44 +218,7 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
                 .clickEvent(ClickEvent.openUrl(url));
         sender.sendMessage(link);
 
-        sender.sendMessage(msg("&7Password is set in &econfig.yml &7under &eweb_editor.password&7."));
-    }
-
-    private void handlePort(CommandSender sender, String[] args) {
-        if (!sender.hasPermission("swagmenus.admin")) {
-            sender.sendMessage(msg("&cYou don't have permission to change the web editor port."));
-            return;
-        }
-        if (args.length < 2) {
-            sender.sendMessage(msg("&cUsage: &e/sm port <1024-65535>"));
-            return;
-        }
-
-        int newPort;
-        try {
-            newPort = Integer.parseInt(args[1]);
-        } catch (NumberFormatException e) {
-            sender.sendMessage(msg("&cInvalid port number: &e" + args[1]));
-            return;
-        }
-
-        if (newPort < 1024 || newPort > 65535) {
-            sender.sendMessage(msg("&cPort must be between &e1024 &cand &e65535&c."));
-            return;
-        }
-
-        var webServer = plugin.getWebEditorServer();
-        if (webServer == null) {
-            sender.sendMessage(msg("&cWeb editor server is not initialized."));
-            return;
-        }
-
-        try {
-            webServer.restart(newPort);
-            sender.sendMessage(msg("&aWeb editor restarted on port &e" + newPort + "&a."));
-        } catch (Exception e) {
-            sender.sendMessage(msg("&cFailed to restart web editor: &f" + e.getMessage()));
-        }
+        sender.sendMessage(msg("&7You'll be prompted to sign in via SwagAPI's shared login if authentication is enabled."));
     }
 
     private void sendHelp(CommandSender sender) {
@@ -275,7 +230,6 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(ColorUtil.toComponent("  &e/sm info <menu> &7— Show menu details"));
         sender.sendMessage(ColorUtil.toComponent("  &e/sm execute <player> <action> &7— Execute an action"));
         sender.sendMessage(ColorUtil.toComponent("  &e/sm editor &7— Open the web editor (admin only)"));
-        sender.sendMessage(ColorUtil.toComponent("  &e/sm port <number> &7— Change the web editor port"));
         sender.sendMessage(ColorUtil.toComponent("&8&m                              "));
     }
 
@@ -286,7 +240,7 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
                                                 @NotNull String[] args) {
         if (args.length == 1) {
             List<String> subs = new ArrayList<>(List.of(
-                    "open", "list", "reload", "execute", "info", "editor", "port", "help"));
+                    "open", "list", "reload", "execute", "info", "editor", "help"));
             return filterStarting(subs, args[0]);
         }
 

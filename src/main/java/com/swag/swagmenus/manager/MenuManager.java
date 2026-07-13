@@ -87,6 +87,7 @@ public class MenuManager {
 
     public boolean loadMenuFile(File file) {
         String menuName = file.getName().replace(".yml", "").toLowerCase();
+        long start = System.nanoTime();
         try {
             YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
             Menu menu = parseMenu(menuName, config, file.getPath());
@@ -98,6 +99,9 @@ public class MenuManager {
             }
 
             LOG.info("Loaded menu '" + menuName + "'");
+            long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
+            com.swag.swagmenus.util.DebugLog.log("Parsed menu '" + menuName + "' in " + elapsedMs
+                    + "ms (" + menu.getItems().size() + " items, " + menu.getMaxPage() + " page(s))");
             return true;
         } catch (Exception e) {
             LOG.warning("Failed to load menu '" + menuName + "': " + e.getMessage());
@@ -107,7 +111,10 @@ public class MenuManager {
     }
 
     public void reloadAllMenus() {
-        for (MenuSession session : sessions.values()) {
+        // Snapshot before iterating: closeInventory() fires InventoryCloseEvent → handleMenuClose()
+        // which removes entries from `sessions`, causing undefined behaviour if we iterate it live.
+        List<MenuSession> snapshot = new ArrayList<>(sessions.values());
+        for (MenuSession session : snapshot) {
             session.getPlayer().closeInventory();
         }
         sessions.clear();
@@ -191,7 +198,7 @@ public class MenuManager {
      * opened empty and items are filled in frame-by-frame via scheduled tasks.
      */
     private void openMenuAnimated(Player player, Menu menu) {
-        Component title = ColorUtil.toComponent(PlaceholderUtil.apply(menu.getTitle(), player));
+        Component title = buildTitle(player, menu, 1);
         Inventory inv = Bukkit.createInventory(null, menu.getSize(), title);
         player.openInventory(inv);
 
@@ -366,10 +373,41 @@ public class MenuManager {
     }
 
     public Inventory buildInventory(Player player, Menu menu) {
-        Component title = ColorUtil.toComponent(PlaceholderUtil.apply(menu.getTitle(), player));
+        Component title = buildTitle(player, menu, 1);
         Inventory inv = Bukkit.createInventory(null, menu.getSize(), title);
         populateInventory(player, menu, inv);
         return inv;
+    }
+
+    /**
+     * Builds a menu title with {@code %page%}/{@code %total_pages%} (and all other built-in +
+     * PAPI placeholders) resolved for the given page.
+     */
+    private Component buildTitle(Player player, Menu menu, int currentPage) {
+        String resolved = PlaceholderUtil.apply(menu.getTitle(), player, currentPage, menu.getMaxPage());
+        return ColorUtil.toComponent(resolved);
+    }
+
+    /**
+     * Re-titles a player's already-open menu inventory to reflect the session's current page.
+     * Bukkit/Paper inventory titles are normally fixed at {@code Bukkit.createInventory()} time;
+     * {@link org.bukkit.inventory.InventoryView#setTitle(String)} is the only API available in
+     * this Paper version for updating the title of an inventory that's already open, so that
+     * {@code %page%}/{@code %total_pages%} in a menu_title can actually track page navigation.
+     * It's deprecated (Paper prefers immutable, creation-time titles going forward) but not yet
+     * marked for removal, and there is currently no non-deprecated replacement for this exact
+     * capability.
+     */
+    @SuppressWarnings("deprecation")
+    public void updateInventoryTitle(Player player, MenuSession session) {
+        if (!session.getMenu().isPaginated()) return;
+        String resolved = PlaceholderUtil.apply(session.getMenu().getTitle(), player,
+                session.getCurrentPage(), session.getMenu().getMaxPage());
+        try {
+            player.getOpenInventory().setTitle(ColorUtil.colorize(resolved));
+        } catch (Exception e) {
+            LOG.warning("Failed to update inventory title for " + player.getName() + ": " + e.getMessage());
+        }
     }
 
     /**
@@ -558,6 +596,10 @@ public class MenuManager {
             List<?> rawSlots = section.getList("slots");
             if (rawSlots != null) {
                 for (Object raw : rawSlots) {
+                    if (raw == null) {
+                        LOG.warning("Null slot entry in item '" + key + "' in " + filePath + ". Skipping.");
+                        continue;
+                    }
                     Integer resolved = resolveSlot(raw.toString().trim(), menuSize, key, filePath);
                     if (resolved != null) slots.add(resolved);
                 }
@@ -636,6 +678,22 @@ public class MenuManager {
             if (rightReq != null) {
                 builder.rightClickRequirement(RequirementFactory.parseRequirementSet(rightReq,
                         filePath + ".items." + key + ".click_requirement.right_click_requirements"));
+            }
+        }
+
+        // deny_item: the item shown in place of this one when its view_requirement fails.
+        // The render/consume side of this (MenuManager#populateInventory / #buildSlotMap) already
+        // existed; this was the missing parse step. If the deny_item doesn't declare its own
+        // slot/slots, default it to the parent item's slots — the deny item is meant to occupy
+        // the same slot(s) the gated item would have used.
+        ConfigurationSection denyItemSection = section.getConfigurationSection("deny_item");
+        if (denyItemSection != null) {
+            if (!denyItemSection.contains("slot") && !denyItemSection.contains("slots") && !slots.isEmpty()) {
+                denyItemSection.set("slots", new ArrayList<>(slots));
+            }
+            MenuItem denyItem = parseMenuItem(key + "_deny_item", denyItemSection, menuSize, filePath);
+            if (denyItem != null) {
+                builder.denyItem(denyItem);
             }
         }
 
@@ -725,6 +783,9 @@ public class MenuManager {
             Bukkit.getScheduler().cancelTask(refreshTaskId);
         }
 
+        // Poll every 20 ticks (1 second). Per-menu refresh cadence is still honoured precisely
+        // because we track wall-clock elapsed time against the menu's update_interval in ms.
+        // Polling every tick (1L) was unnecessarily iterating all sessions 20x per second.
         refreshTaskId = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
             for (MenuSession session : sessions.values()) {
                 Menu menu = session.getMenu();
@@ -740,7 +801,7 @@ public class MenuManager {
                     }
                 }
             }
-        }, 1L, 1L).getTaskId();
+        }, 20L, 20L).getTaskId();
     }
 
     public void shutdown() {
@@ -759,7 +820,21 @@ public class MenuManager {
 
     public boolean menuExists(String name) { return menus.containsKey(name.toLowerCase()); }
 
-    public void removeMenu(String name) { menus.remove(name.toLowerCase()); }
+    /**
+     * Removes a menu from memory and unregisters its open commands, mirroring the cleanup
+     * {@link #reloadMenu(String)} already does before re-loading. Centralized here (rather than
+     * duplicated in each caller) so every deletion path — the file watcher and the web editor's
+     * DELETE endpoint — gets it automatically instead of leaving a zombie command registered in
+     * Bukkit's CommandMap that silently blocks any future menu from reusing the same command name.
+     */
+    public void removeMenu(String name) {
+        Menu menu = menus.remove(name.toLowerCase());
+        if (menu != null) {
+            for (String cmd : menu.getOpenCommands()) {
+                unregisterOpenCommand(cmd.toLowerCase());
+            }
+        }
+    }
 
     public File getMenusFolder() { return menusFolder; }
 

@@ -16,6 +16,10 @@ public class Menu {
     private final MenuAnimationType animationType;
     private final int animationSpeed; // ticks between frames
 
+    // Highest per-item 'page' value found among this menu's items. 1 if no item declares a
+    // page > 0, meaning the menu is effectively single-page and [nextpage] is a no-op.
+    private final int maxPage;
+
     private Menu(Builder builder) {
         this.name = builder.name;
         this.title = builder.title;
@@ -26,6 +30,14 @@ public class Menu {
         this.fillItem = builder.fillItem;
         this.animationType = builder.animationType;
         this.animationSpeed = builder.animationSpeed;
+
+        int highest = 1;
+        for (MenuItem item : this.items) {
+            if (item.getPage() > highest) {
+                highest = item.getPage();
+            }
+        }
+        this.maxPage = highest;
     }
 
     public String getName() { return name; }
@@ -37,9 +49,11 @@ public class Menu {
     public MenuItem getFillItem() { return fillItem; }
     public MenuAnimationType getAnimationType() { return animationType; }
     public int getAnimationSpeed() { return animationSpeed; }
+    public int getMaxPage() { return maxPage; }
 
     public boolean hasFillItem() { return fillItem != null; }
     public boolean hasAutoRefresh() { return updateInterval > 0; }
+    public boolean isPaginated() { return maxPage > 1; }
 
     public static Builder builder(String name) {
         return new Builder(name);

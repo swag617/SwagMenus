@@ -1,116 +1,101 @@
 package com.swag.swagmenus.web;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpServer;
+import com.SwagDev.SwagAPI.api.IWebService;
 import com.swag.swagmenus.SwagMenus;
+import com.sun.net.httpserver.HttpExchange;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
 /**
- * Manages the lifecycle of the embedded HTTP server for the web editor.
- * Uses {@link HttpServer} from {@code com.sun.net.httpserver} — no extra dependencies.
- * Binds to {@code 0.0.0.0} by default so it is reachable from the network.
+ * Registers the SwagMenus web editor with SwagAPI's shared {@link IWebService}.
+ *
+ * SwagMenus does not run its own {@code HttpServer} — SwagAPI's shared server does.
+ * The module is mounted at {@code /swagapi/swagmenus/} and every request is already
+ * authenticated by SwagAPI's own session-cookie login system before
+ * {@link WebEditorHttpHandler} ever runs, so the web editor implements no password/token
+ * auth of its own.
+ *
+ * This is a soft dependency: if SwagAPI's {@link IWebService} isn't registered (SwagAPI
+ * missing/disabled), {@link #register()} logs a warning and skips — it does not prevent
+ * SwagMenus from enabling.
  */
 public class WebEditorServer {
 
     private static final Logger LOG = Logger.getLogger("SwagMenus");
 
     private final SwagMenus plugin;
-    private final AuthManager authManager;
-
-    private HttpServer server;
-    private int currentPort;
+    private boolean registered = false;
 
     public WebEditorServer(SwagMenus plugin) {
         this.plugin = plugin;
-        long expiryMinutes = plugin.getConfig().getLong("web_editor.token_expiry_minutes", 30);
-        this.authManager = new AuthManager(expiryMinutes);
-        this.currentPort = plugin.getConfig().getInt("web_editor.port", 8080);
     }
 
-    public void start() {
+    /**
+     * Registers the web editor module with SwagAPI's {@link IWebService}, if available.
+     */
+    public void register() {
         if (!plugin.getConfig().getBoolean("web_editor.enabled", true)) {
             LOG.info("Web editor is disabled in config.yml.");
             return;
         }
 
-        if (server != null) {
-            LOG.warning("WebEditorServer.start() called but server is already running.");
+        IWebService webService = resolveWebService();
+        if (webService == null) {
+            LOG.warning("SwagAPI IWebService not found — web editor will not be available. "
+                    + "Install/enable SwagAPI to use the web editor.");
             return;
         }
 
-        String bindAddress = plugin.getConfig().getString("web_editor.bind-address", "0.0.0.0");
-        try {
-            server = HttpServer.create(new InetSocketAddress(bindAddress, currentPort), 0);
-        } catch (IOException e) {
-            LOG.severe("Failed to start web editor on " + bindAddress + ":" + currentPort + ": " + e.getMessage());
-            server = null;
-            return;
-        }
-
-        StaticFileHandler staticHandler = new StaticFileHandler();
-        ApiHandler apiHandler = new ApiHandler(plugin, authManager);
-
-        // More specific contexts must be registered first
-        server.createContext("/api", apiHandler);
-        server.createContext("/assets", staticHandler);
-        server.createContext("/editor", staticHandler);
-        server.createContext("/", staticHandler);
-
-        // Virtual threads — Java 21, no thread pool configuration needed
-        server.setExecutor(Executors.newVirtualThreadPerTaskExecutor());
-        server.start();
-
-        LOG.info("Web editor started on port " + currentPort
-                + " — visit http://localhost:" + currentPort + "/editor");
+        webService.registerModule(plugin, new WebEditorHttpHandler(plugin));
+        registered = true;
+        LOG.info("Web editor registered at " + webService.getPluginUrl(plugin.getName().toLowerCase()));
     }
 
     /**
-     * Stops the HTTP server, waiting up to 2 seconds for in-flight requests to finish.
+     * Unregisters the web editor module from SwagAPI's {@link IWebService}, if it was registered.
      */
-    public void stop() {
-        if (server == null) return;
-        server.stop(2);
-        server = null;
-        LOG.info("Web editor stopped.");
+    public void unregister() {
+        if (!registered) return;
+        IWebService webService = resolveWebService();
+        if (webService != null) {
+            webService.unregisterModule(plugin);
+        }
+        registered = false;
+        LOG.info("Web editor unregistered.");
     }
 
     /**
-     * Restarts the server on a new port and persists the change to config.yml.
+     * @return true if the web editor module is currently registered with SwagAPI
      */
-    public void restart(int newPort) {
-        if (newPort < 1024 || newPort > 65535) {
-            throw new IllegalArgumentException("Port must be between 1024 and 65535.");
-        }
-        stop();
-        currentPort = newPort;
-        plugin.getConfig().set("web_editor.port", newPort);
-        plugin.saveConfig();
-        start();
+    public boolean isRegistered() {
+        return registered;
     }
 
-    public int getPort() {
-        return currentPort;
+    /**
+     * @return the full browser URL to the web editor, or null if not registered
+     *         or SwagAPI's web service is unavailable
+     */
+    public String getUrl() {
+        if (!registered) return null;
+        IWebService webService = resolveWebService();
+        if (webService == null) return null;
+        return webService.getPluginUrl(plugin.getName().toLowerCase());
     }
 
-    public AuthManager getAuthManager() {
-        return authManager;
-    }
-
-    public boolean isRunning() {
-        return server != null;
+    private IWebService resolveWebService() {
+        RegisteredServiceProvider<IWebService> rsp =
+                plugin.getServer().getServicesManager().getRegistration(IWebService.class);
+        return rsp != null ? rsp.getProvider() : null;
     }
 
     static void sendResponse(HttpExchange exchange, int status, String contentType, String body)
             throws IOException {
         byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         exchange.getResponseHeaders().set("Content-Type", contentType + "; charset=utf-8");
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
         exchange.sendResponseHeaders(status, bytes.length);
         try (OutputStream os = exchange.getResponseBody()) {
             os.write(bytes);

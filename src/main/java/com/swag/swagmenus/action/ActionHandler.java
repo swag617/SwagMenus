@@ -103,6 +103,9 @@ public class ActionHandler {
         String type = action.substring(1, closeBracket).toLowerCase().trim();
         String args = PlaceholderUtil.apply(action.substring(closeBracket + 1).trim(), player);
 
+        com.swag.swagmenus.util.DebugLog.log(player.getName() + " -> [" + type + "] " + args
+                + (currentMenuName != null ? " (menu: " + currentMenuName + ")" : ""));
+
         switch (type) {
             case "player" -> runPlayerCommand(player, args);
             case "console" -> runConsoleCommand(args);
@@ -136,10 +139,11 @@ public class ActionHandler {
             }
             case "nextpage" -> {
                 MenuSession sess = plugin.getMenuManager().getSession(player);
-                if (sess != null) {
+                if (sess != null && sess.getCurrentPage() < sess.getMenu().getMaxPage()) {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         sess.setCurrentPage(sess.getCurrentPage() + 1);
                         plugin.getMenuManager().populateInventory(player, sess.getMenu(), sess.getInventory());
+                        plugin.getMenuManager().updateInventoryTitle(player, sess);
                     });
                 }
             }
@@ -149,6 +153,7 @@ public class ActionHandler {
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         sess.setCurrentPage(sess.getCurrentPage() - 1);
                         plugin.getMenuManager().populateInventory(player, sess.getMenu(), sess.getInventory());
+                        plugin.getMenuManager().updateInventoryTitle(player, sess);
                     });
                 }
             }
@@ -194,6 +199,10 @@ public class ActionHandler {
                 }
                 try {
                     double amount = Double.parseDouble(args.trim());
+                    if (amount <= 0) {
+                        LOG.warning("[money_give] Amount must be positive, got: " + args);
+                        break;
+                    }
                     SwagMenus.getEconomy().depositPlayer(player, amount);
                 } catch (NumberFormatException e) {
                     LOG.warning("[money_give] Invalid amount: " + args);
@@ -206,6 +215,10 @@ public class ActionHandler {
                 }
                 try {
                     double amount = Double.parseDouble(args.trim());
+                    if (amount <= 0) {
+                        LOG.warning("[money_take] Amount must be positive, got: " + args);
+                        break;
+                    }
                     if (SwagMenus.getEconomy().has(player, amount)) {
                         SwagMenus.getEconomy().withdrawPlayer(player, amount);
                     }

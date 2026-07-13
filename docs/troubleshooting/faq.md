@@ -14,12 +14,17 @@
 - Run `/papi ecloud download Player` for built-in player placeholders
 - Make sure the placeholder you're using has its expansion installed: `/papi ecloud download <expansion>`
 
-## The web editor says "site can't be reached"
+## The web editor link doesn't work / `/sm editor` says it's unavailable
 
-- Run `/sm editor` in-game and check the port shown
-- If your server is remote, use the server's public IP address, not `localhost`
-- Check that port 8080 (or your configured port) is open in your firewall/hosting panel
-- Verify `web_editor.enabled: true` in `config.yml`
+The web editor is hosted by [SwagAPI](https://github.com/swag617/SwagAPI)'s shared web server, not
+by SwagMenus itself — SwagMenus has no HTTP server, port, or password of its own.
+
+- Confirm SwagAPI is installed, enabled, and its own web server is reachable
+- Verify `web_editor.enabled: true` in SwagMenus' `config.yml`
+- Run `/sm editor` in-game — it reports the resolved URL, or tells you SwagAPI isn't available
+- If SwagAPI's web server is remote, use its public host, not `localhost`
+- If SwagAPI has its own login enabled, you'll be redirected to sign in there first — that's
+  expected and not specific to SwagMenus
 
 ## Items are showing as STONE in the menu
 

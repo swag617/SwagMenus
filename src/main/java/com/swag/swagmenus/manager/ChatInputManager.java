@@ -2,12 +2,13 @@ package com.swag.swagmenus.manager;
 
 import com.swag.swagmenus.SwagMenus;
 import com.swag.swagmenus.util.ColorUtil;
+import io.papermc.paper.event.player.AsyncChatEvent;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
@@ -41,15 +42,21 @@ public class ChatInputManager implements Listener {
         return pending.containsKey(player.getUniqueId());
     }
 
-    @SuppressWarnings("deprecation")
+    /**
+     * Uses Paper's native, Adventure-based chat event rather than the deprecated
+     * {@code org.bukkit.event.player.AsyncPlayerChatEvent}. Paper still fires the legacy event
+     * for backward compatibility today, but it's explicitly deprecated and not guaranteed to
+     * keep firing (e.g. a chat plugin that only hooks AsyncChatEvent and cancels chat before the
+     * legacy bridge runs would silently break every [chat_input] prompt).
+     */
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onChat(AsyncPlayerChatEvent event) {
+    public void onChat(AsyncChatEvent event) {
         UUID uuid = event.getPlayer().getUniqueId();
         PendingInput input = pending.remove(uuid);
         if (input == null) return;
 
         event.setCancelled(true);
-        String text = event.getMessage();
+        String text = PlainTextComponentSerializer.plainText().serialize(event.message());
         Player player = event.getPlayer();
 
         List<String> resolved = input.actions().stream()

@@ -33,6 +33,22 @@ public final class PlaceholderUtil {
         return result;
     }
 
+    /**
+     * Same as {@link #apply(String, Player)} but also resolves the built-in
+     * {@code %page%} / {@code %total_pages%} placeholders. Used for menu titles, the only
+     * place pagination placeholders currently apply.
+     */
+    public static String apply(String input, Player player, int currentPage, int totalPages) {
+        if (input == null) return "";
+        String result = applyBuiltIn(input, player)
+                .replace("%page%", String.valueOf(currentPage))
+                .replace("%total_pages%", String.valueOf(totalPages));
+        if (isEnabled() && player != null) {
+            result = PlaceholderAPI.setPlaceholders(player, result);
+        }
+        return result;
+    }
+
     public static String apply(String input, OfflinePlayer player) {
         if (input == null) return "";
         if (player instanceof Player online) {

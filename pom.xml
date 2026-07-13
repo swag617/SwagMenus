@@ -61,6 +61,14 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- SwagAPI - provided (shared HTTP server for the web editor) -->
+        <dependency>
+            <groupId>com.SwagDev</groupId>
+            <artifactId>SwagAPI</artifactId>
+            <version>1.0.0</version>
+            <scope>provided</scope>
+        </dependency>
+
         <!-- Vault API (soft dependency) -->
         <dependency>
             <groupId>com.github.MilkBowl</groupId>

@@ -1,12 +1,17 @@
 package com.swag.swagmenus.requirement.requirements;
 
+import com.swag.swagmenus.SwagMenus;
 import com.swag.swagmenus.requirement.Requirement;
-import com.swag.swagmenus.util.PlaceholderUtil;
 import org.bukkit.entity.Player;
 
 /**
- * Passes if the player's balance (via %vault_balance% placeholder) is >= the required amount.
- * Requires PlaceholderAPI + Vault to be installed.
+ * Passes if the player's Vault balance is >= the required amount.
+ *
+ * Reads the balance directly from {@link SwagMenus#getEconomy()} — the same Vault hook used by
+ * the {@code [money_give]}/{@code [money_take]} actions — rather than round-tripping through the
+ * PlaceholderAPI {@code %vault_balance%} placeholder. The old PAPI-based approach silently
+ * evaluated to "false" on any server that has Vault + an economy plugin but not PlaceholderAPI
+ * installed (PAPI is a soft dependency, not required), even though Vault itself was available.
  */
 public class MoneyRequirement implements Requirement {
 
@@ -19,15 +24,9 @@ public class MoneyRequirement implements Requirement {
     @Override
     public boolean isMet(Player player) {
         if (player == null) return false;
-        String balanceStr = PlaceholderUtil.apply("%vault_balance%", player);
-        // If PAPI/Vault is absent the placeholder will not be replaced
-        if (balanceStr.contains("%")) return false;
-        try {
-            double balance = Double.parseDouble(balanceStr.replace(",", ""));
-            return balance >= amount;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        if (!SwagMenus.isEconomyEnabled()) return false;
+        double balance = SwagMenus.getEconomy().getBalance(player);
+        return balance >= amount;
     }
 
     @Override
