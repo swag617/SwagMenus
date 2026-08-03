@@ -19,6 +19,7 @@ SwagMenus is a deeply configurable, player-experience-first GUI menu plugin for 
 |---|---|
 | Paper | 1.21.x |
 | Java | 21+ |
+| SwagAPI | Latest *(hard dependency — powers the web editor)* |
 | PlaceholderAPI | Any *(optional)* |
 
 ## Quick Links

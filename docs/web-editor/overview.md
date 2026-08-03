@@ -2,7 +2,9 @@
 
 SwagMenus includes a fully browser-based visual menu editor. It does **not** run its own HTTP
 server — it's mounted as a module inside [SwagAPI](https://github.com/swag617/SwagAPI)'s shared
-web server, so it requires SwagAPI to be installed and enabled alongside SwagMenus.
+web server. SwagAPI is now a **hard dependency** of SwagMenus (`depend`, not `softdepend`, in
+`plugin.yml`) — the web editor is a core feature, not an optional add-on, and SwagMenus will not
+enable at all without SwagAPI present.
 
 ## Features
 
@@ -19,13 +21,15 @@ web server, so it requires SwagAPI to be installed and enabled alongside SwagMen
 
 ## Requirements
 
-- [SwagAPI](https://github.com/swag617/SwagAPI) must be installed and enabled — it provides the
-  actual HTTP server and login system the editor runs on
+- [SwagAPI](https://github.com/swag617/SwagAPI) must be installed and enabled — it is a **hard
+  dependency** of SwagMenus (listed under `depend` in `plugin.yml`), providing the actual HTTP
+  server and login system the editor runs on. If SwagAPI is missing, Bukkit will not enable
+  SwagMenus at all.
 - `web_editor.enabled: true` in SwagMenus' `config.yml` (default)
 
-If SwagAPI isn't installed or enabled, SwagMenus still works normally (menus, commands, actions,
-requirements) — only the web editor is unavailable. The console logs a warning on startup in this
-case, and `/sm editor` tells you the editor isn't available.
+With SwagAPI present but `web_editor.enabled: false`, SwagMenus still works normally (menus,
+commands, actions, requirements) — only the web editor module itself is unavailable. The console
+logs a message on startup in this case, and `/sm editor` tells you the editor isn't available.
 
 ## Accessing the Editor
 

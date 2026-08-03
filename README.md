@@ -40,24 +40,30 @@ Define menus in YAML *or* build them visually with the built-in web editor — n
 
 ## ✦ Installation
 
-1. Download `SwagMenus.jar` from [Releases](https://github.com/swag617/SwagMenus/releases)
-2. Drop it into your server's `plugins/` folder
-3. Restart your server
-4. Two example menus are generated automatically in `plugins/SwagMenus/menus/`
+1. Install [SwagAPI](https://github.com/swag617/SwagAPI) — **required**, SwagMenus will not enable without it
+2. Download `SwagMenus.jar` from [Releases](https://github.com/swag617/SwagMenus/releases)
+3. Drop it into your server's `plugins/` folder
+4. Restart your server
+5. Two example menus are generated automatically in `plugins/SwagMenus/menus/`
 
-> **Requirements:** Paper 1.21.x — Java 21 — PlaceholderAPI *(optional but recommended)*
+> **Requirements:** Paper 1.21.x — Java 21 — SwagAPI *(hard dependency)* — PlaceholderAPI *(optional but recommended)*
 
 ---
 
 ## ✦ Web Editor
 
-SwagMenus includes a browser-based visual menu editor. No separate installation needed — it runs directly inside the plugin.
+SwagMenus includes a browser-based visual menu editor. It does **not** run its own HTTP server —
+it's mounted as a module inside [SwagAPI](https://github.com/swag617/SwagAPI)'s shared web server,
+authenticated by SwagAPI's own session-cookie login. SwagMenus has no port, bind-address, or
+password of its own.
 
 **Starting the editor:**
 ```
 /sm editor
 ```
-Click the link that appears in chat, enter your password, and you're in.
+Click the link that appears in chat (something like `http://your.server:port/swagapi/swagmenus/`).
+If SwagAPI's login is enabled you'll sign in there once, and that session covers every module
+SwagAPI hosts.
 
 **Features:**
 - Visual slot grid with real Minecraft item icons
@@ -72,16 +78,9 @@ Click the link that appears in chat, enter your password, and you're in.
 ```yaml
 web_editor:
   enabled: true
-  port: 8080
-  bind-address: "0.0.0.0"   # 0.0.0.0 = all interfaces, 127.0.0.1 = localhost only
-  password: "changeme"       # change this!
-  token_expiry_minutes: 30
 ```
-
-**Change port in-game:**
-```
-/sm port 9090
-```
+There is no `port`, `bind-address`, or `password` key — those belong to SwagAPI's own web server
+configuration. See [docs/web-editor/overview.md](docs/web-editor/overview.md) for details.
 
 ---
 
@@ -96,8 +95,7 @@ web_editor:
 | `/sm reload <menu>` | Reload a specific menu | `swagmenus.reload` |
 | `/sm info <menu>` | Show menu details | `swagmenus.list` |
 | `/sm execute <player> <action>` | Execute an action on a player | `swagmenus.execute` |
-| `/sm editor` | Open the web editor | `swagmenus.admin` |
-| `/sm port <number>` | Change the web editor port | `swagmenus.admin` |
+| `/sm editor` | Open the web editor link (requires SwagAPI) | `swagmenus.admin` |
 | `/<open_command>` | Open a menu via its custom command | `swagmenus.open` |
 
 ---

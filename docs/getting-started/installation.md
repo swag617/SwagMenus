@@ -4,8 +4,8 @@
 
 - **Paper 1.21.x** — Spigot is not supported
 - **Java 21** or higher
+- **[SwagAPI](https://github.com/swag617/SwagAPI)** *(hard dependency — SwagMenus will not enable without it)*
 - **PlaceholderAPI** *(optional but recommended)*
-- **SwagAPI** *(optional — required only for the [web editor](../web-editor/overview.md))*
 
 ## Steps
 
@@ -40,9 +40,11 @@ You should see this in your console on startup:
 [SwagMenus] Enabled successfully.
 ```
 
-The web editor line only appears if [SwagAPI](https://github.com/swag617/SwagAPI) is installed and
-enabled — SwagMenus works fine without it, you just won't have the browser-based editor (menus can
-still be hand-authored as YAML in `plugins/SwagMenus/menus/`).
+SwagAPI is a **hard dependency** — if it is missing or fails to enable, Bukkit will not enable
+SwagMenus at all (it will show as failing to load in the console). The web editor line above only
+appears if `web_editor.enabled: true` in SwagMenus' own `config.yml` (default); setting it to
+`false` disables the editor module while the rest of the plugin (menus, commands, actions) runs
+normally, since SwagAPI itself is still present.
 
 ## PlaceholderAPI
 
