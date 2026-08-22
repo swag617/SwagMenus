@@ -115,11 +115,11 @@ public class MenuFileWatcher implements Runnable {
 
         boolean success = menuManager.reloadMenu(menuName);
         if (success) {
-            String msg = "&a[SwagMenus] Auto-reloaded menu &e" + menuName + " &adue to file change.";
+            String msg = "&a" + plugin.getPrefixTag("[SwagMenus]") + " Auto-reloaded menu &e" + menuName + " &adue to file change.";
             menuManager.notifyAdmins(msg);
             LOG.info("Auto-reloaded menu '" + menuName + "' due to file change.");
         } else {
-            String msg = "&c[SwagMenus] Failed to auto-reload menu &e" + menuName
+            String msg = "&c" + plugin.getPrefixTag("[SwagMenus]") + " Failed to auto-reload menu &e" + menuName
                     + " &cafter file change. Check console.";
             menuManager.notifyAdmins(msg);
         }
@@ -129,7 +129,7 @@ public class MenuFileWatcher implements Runnable {
         if (menuManager.menuExists(menuName)) {
             menuManager.removeMenu(menuName);
             LOG.info("Menu file deleted: " + menuName + ".yml — menu removed from memory.");
-            menuManager.notifyAdmins("&e[SwagMenus] Menu &6" + menuName + " &ewas deleted.");
+            menuManager.notifyAdmins("&e" + plugin.getPrefixTag("[SwagMenus]") + " Menu &6" + menuName + " &ewas deleted.");
         }
     }
 }

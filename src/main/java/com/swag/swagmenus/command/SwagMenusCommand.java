@@ -19,12 +19,19 @@ import java.util.stream.Collectors;
 
 public class SwagMenusCommand implements CommandExecutor, TabCompleter {
 
-    private static final String PREFIX = "&8[&6SwagMenus&8] ";
-
     private final SwagMenus plugin;
 
     public SwagMenusCommand(SwagMenus plugin) {
         this.plugin = plugin;
+    }
+
+    /**
+     * Builds the "[SwagMenus]" chat-message tag, honoring a central admin override from
+     * SwagAPI's IPrefixService if available. Only the bracketed tag text itself is
+     * swappable — the surrounding color code and trailing space are unchanged.
+     */
+    private String prefix() {
+        return "&8" + plugin.getPrefixTag("[&6SwagMenus&8]") + " ";
     }
 
     @Override
@@ -177,7 +184,7 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        sender.sendMessage(ColorUtil.toComponent(PREFIX + "&6Menu Info: &e" + menuName));
+        sender.sendMessage(ColorUtil.toComponent(prefix() + "&6Menu Info: &e" + menuName));
         sender.sendMessage(ColorUtil.toComponent("  &7Title: &f" + menu.getTitle()));
         sender.sendMessage(ColorUtil.toComponent("  &7Size: &f" + menu.getSize()
                 + " slots (" + (menu.getSize() / 9) + " rows)"));
@@ -223,7 +230,7 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(ColorUtil.toComponent("&8&m                              "));
-        sender.sendMessage(ColorUtil.toComponent(PREFIX + "&6Commands"));
+        sender.sendMessage(ColorUtil.toComponent(prefix() + "&6Commands"));
         sender.sendMessage(ColorUtil.toComponent("  &e/sm open <menu> [player] &7— Open a menu"));
         sender.sendMessage(ColorUtil.toComponent("  &e/sm list &7— List all loaded menus"));
         sender.sendMessage(ColorUtil.toComponent("  &e/sm reload [menu] &7— Reload all or one menu"));
@@ -278,7 +285,7 @@ public class SwagMenusCommand implements CommandExecutor, TabCompleter {
     }
 
     private Component msg(String message) {
-        return ColorUtil.toComponent(PREFIX + message);
+        return ColorUtil.toComponent(prefix() + message);
     }
 
     private List<String> filterStarting(List<String> options, String partial) {

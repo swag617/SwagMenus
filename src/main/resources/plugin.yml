@@ -6,10 +6,8 @@ authors: [Swag617]
 description: A user-friendly custom GUI menu plugin with a web-based editor.
 website: https://github.com/swag617/SwagMenus
 
-depend:
-  - SwagAPI
-
 softdepend:
+  - SwagAPI
   - PlaceholderAPI
   - Vault
 
