@@ -42,6 +42,9 @@ import java.util.logging.Logger;
  *   POST   /api/menus/{name}/reload   — reload menu in-game
  *   GET    /api/materials             — all valid Material names
  *   GET    /api/sounds                — all valid Sound names
+ *   GET    /api/config                — plugin-wide config.yml settings (top-level keys only;
+ *                                        never touches menu YAML files)
+ *   POST   /api/config                — update plugin-wide config.yml settings
  */
 public class ApiHandler implements HttpHandler {
 
@@ -80,6 +83,11 @@ public class ApiHandler implements HttpHandler {
 
         if (sub.equals("/sounds") || sub.equals("/sounds/")) {
             if ("GET".equals(method)) { handleSounds(exchange); return; }
+        }
+
+        if (sub.equals("/config") || sub.equals("/config/")) {
+            if ("GET".equals(method)) { handleGetConfig(exchange); return; }
+            if ("POST".equals(method)) { handleSaveConfig(exchange); return; }
         }
 
         if (sub.equals("/menus") || sub.equals("/menus/")) {
@@ -216,6 +224,77 @@ public class ApiHandler implements HttpHandler {
         );
         names.sort(String::compareTo);
         sendJson(exchange, 200, names);
+    }
+
+    /**
+     * Returns the plugin-wide {@code config.yml} settings exposed to the web editor's
+     * Settings panel. Intentionally excludes {@code web_editor.enabled} — that key gates
+     * the web editor itself, so editing it from the panel it gates would be circular; it
+     * stays YAML-only. Never touches menu YAML files, which live entirely under
+     * {@code /api/menus}.
+     */
+    private void handleGetConfig(HttpExchange exchange) throws IOException {
+        var cfg = plugin.getConfig();
+
+        Map<String, Object> messages = new LinkedHashMap<>();
+        messages.put("no_permission", cfg.getString("messages.no_permission", ""));
+        messages.put("menu_not_found", cfg.getString("messages.menu_not_found", ""));
+        messages.put("player_not_found", cfg.getString("messages.player_not_found", ""));
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("auto_reload_on_change", cfg.getBoolean("auto_reload_on_change", true));
+        result.put("default_update_interval", cfg.getInt("default_update_interval", 0));
+        result.put("debug", cfg.getBoolean("debug", false));
+        result.put("messages", messages);
+        sendJson(exchange, 200, result);
+    }
+
+    /**
+     * Updates the plugin-wide {@code config.yml} settings from the web editor's Settings
+     * panel. Mutates the plugin's live, already-loaded config object ({@link
+     * SwagMenus#getConfig()}) in place and calls {@code .set(path, value)} only for the
+     * specific keys this form submits, then {@link SwagMenus#saveConfig()} — it never
+     * constructs a fresh blank {@link YamlConfiguration} and rewrites the whole file from
+     * it, which would silently wipe any key the form doesn't know about. This endpoint only
+     * ever touches {@code config.yml}; menu YAML files are handled entirely separately via
+     * {@code /api/menus}.
+     */
+    private void handleSaveConfig(HttpExchange exchange) throws IOException {
+        String body = readBody(exchange);
+        JsonObject json;
+        try {
+            json = JsonParser.parseString(body).getAsJsonObject();
+        } catch (JsonSyntaxException | IllegalStateException e) {
+            sendJson(exchange, 400, mapOf("error", "Invalid JSON body: " + e.getMessage()));
+            return;
+        }
+
+        var cfg = plugin.getConfig();
+
+        if (json.has("auto_reload_on_change") && json.get("auto_reload_on_change").isJsonPrimitive()) {
+            cfg.set("auto_reload_on_change", json.get("auto_reload_on_change").getAsBoolean());
+        }
+        if (json.has("default_update_interval") && json.get("default_update_interval").isJsonPrimitive()) {
+            cfg.set("default_update_interval", json.get("default_update_interval").getAsInt());
+        }
+        if (json.has("debug") && json.get("debug").isJsonPrimitive()) {
+            cfg.set("debug", json.get("debug").getAsBoolean());
+        }
+        if (json.has("messages") && json.get("messages").isJsonObject()) {
+            JsonObject messages = json.getAsJsonObject("messages");
+            if (messages.has("no_permission") && messages.get("no_permission").isJsonPrimitive()) {
+                cfg.set("messages.no_permission", messages.get("no_permission").getAsString());
+            }
+            if (messages.has("menu_not_found") && messages.get("menu_not_found").isJsonPrimitive()) {
+                cfg.set("messages.menu_not_found", messages.get("menu_not_found").getAsString());
+            }
+            if (messages.has("player_not_found") && messages.get("player_not_found").isJsonPrimitive()) {
+                cfg.set("messages.player_not_found", messages.get("player_not_found").getAsString());
+            }
+        }
+
+        plugin.saveConfig();
+        sendJson(exchange, 200, mapOf("status", "saved"));
     }
 
     @SuppressWarnings("unchecked")

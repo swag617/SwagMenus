@@ -256,6 +256,10 @@
       Menus
       <button id="btn-new-menu">+ New</button>
     </div>
+    <div class="menu-item" id="nav-settings" style="margin:0 6px 8px;">
+      <span class="menu-item-icon" style="background: var(--text-2)"></span>
+      <span class="menu-item-name">&#9881; Settings</span>
+    </div>
     <div id="menu-list"></div>
     <div class="sidebar-footer">
       <button id="btn-delete-menu">Delete Menu</button>
@@ -276,6 +280,40 @@
       </div>
       <div id="grid-container">
         <div id="slot-grid"></div>
+      </div>
+    </div>
+    <div id="settings-wrap" style="display:none">
+      <div class="section-title">Plugin Settings</div>
+      <div id="settings-form" style="background: var(--bg-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; max-width: 520px; display:flex; flex-direction:column; gap:14px;">
+        <div class="checkbox-row">
+          <input type="checkbox" id="cfg-auto-reload">
+          <label for="cfg-auto-reload">Auto-reload menus on file change</label>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Default Update Interval (ticks)</label>
+          <input type="number" id="cfg-update-interval" min="0" value="0">
+          <div class="field-hint">Fallback auto-refresh interval for menus that don't specify their own <code>update_interval</code>. 0 = off.</div>
+        </div>
+        <div class="checkbox-row">
+          <input type="checkbox" id="cfg-debug">
+          <label for="cfg-debug">Enable debug logging</label>
+        </div>
+        <div class="panel-section">
+          <div class="panel-section-title">Messages</div>
+          <div class="field-group">
+            <label class="field-label">No Permission</label>
+            <input type="text" id="cfg-msg-no-permission" placeholder="&amp;cYou don't have permission to do that.">
+          </div>
+          <div class="field-group" style="margin-top:10px;">
+            <label class="field-label">Menu Not Found</label>
+            <input type="text" id="cfg-msg-menu-not-found" placeholder="&amp;c[SwagMenus] Menu '%menu%' was not found.">
+          </div>
+          <div class="field-group" style="margin-top:10px;">
+            <label class="field-label">Player Not Found</label>
+            <input type="text" id="cfg-msg-player-not-found" placeholder="&amp;c[SwagMenus] Player '%player%' was not found.">
+          </div>
+        </div>
+        <button id="btn-save-settings" style="background: var(--green); color:#fff; padding:9px; border-radius: var(--radius-sm); font-weight:600; width:170px;">Save Settings</button>
       </div>
     </div>
   </main>
@@ -1191,6 +1229,68 @@ function setStatus(ok) {
 }
 
 // ============================================================
+// Main-area view switching — 'none' (no menu selected), 'grid'
+// (menu editor), or 'settings' (plugin config.yml panel)
+// ============================================================
+function showMainView(view) {
+  document.getElementById('no-menu').style.display = view === 'none' ? '' : 'none';
+  document.getElementById('grid-wrap').style.display = view === 'grid' ? '' : 'none';
+  document.getElementById('settings-wrap').style.display = view === 'settings' ? '' : 'none';
+  const navSettings = document.getElementById('nav-settings');
+  if (navSettings) navSettings.classList.toggle('active', view === 'settings');
+}
+
+// ============================================================
+// Plugin Settings — config.yml (top-level keys only; menu YAML
+// files are handled entirely separately via /api/menus)
+// ============================================================
+async function loadSettings() {
+  try {
+    const cfg = await apiGet('/config');
+    document.getElementById('cfg-auto-reload').checked = !!cfg.auto_reload_on_change;
+    document.getElementById('cfg-update-interval').value = cfg.default_update_interval ?? 0;
+    document.getElementById('cfg-debug').checked = !!cfg.debug;
+    document.getElementById('cfg-msg-no-permission').value = cfg.messages?.no_permission ?? '';
+    document.getElementById('cfg-msg-menu-not-found').value = cfg.messages?.menu_not_found ?? '';
+    document.getElementById('cfg-msg-player-not-found').value = cfg.messages?.player_not_found ?? '';
+  } catch (e) {
+    toast('Failed to load settings: ' + e.message, 'error');
+  }
+}
+
+document.getElementById('nav-settings').onclick = () => {
+  state.currentMenu = null;
+  renderMenuList();
+  showMainView('settings');
+  hideItemEditor();
+  loadSettings();
+};
+
+document.getElementById('btn-save-settings').onclick = async () => {
+  const payload = {
+    auto_reload_on_change: document.getElementById('cfg-auto-reload').checked,
+    default_update_interval: parseInt(document.getElementById('cfg-update-interval').value, 10) || 0,
+    debug: document.getElementById('cfg-debug').checked,
+    messages: {
+      no_permission: document.getElementById('cfg-msg-no-permission').value,
+      menu_not_found: document.getElementById('cfg-msg-menu-not-found').value,
+      player_not_found: document.getElementById('cfg-msg-player-not-found').value,
+    },
+  };
+  try {
+    const res = await apiPost('/config', payload);
+    if (res.ok) {
+      toast('Settings saved.', 'success');
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast('Failed to save settings: ' + (err.error || res.status), 'error');
+    }
+  } catch (e) {
+    toast('Save error: ' + e.message, 'error');
+  }
+};
+
+// ============================================================
 // Menu list
 // ============================================================
 function renderMenuList() {
@@ -1892,8 +1992,7 @@ document.getElementById('btn-delete-menu').onclick = () => {
           state.items = {};
           state.selectedSlot = null;
           renderMenuList();
-          document.getElementById('no-menu').style.display = '';
-          document.getElementById('grid-wrap').style.display = 'none';
+          showMainView('none');
           hideItemEditor();
           toast('Menu deleted.', 'info');
         } else {
@@ -2348,8 +2447,7 @@ async function loadMenu(name) {
 
     renderMenuList();
     renderGrid(sz);
-    document.getElementById('no-menu').style.display = 'none';
-    document.getElementById('grid-wrap').style.display = '';
+    showMainView('grid');
     exitFillItemMode();
     hideItemEditor();
 
