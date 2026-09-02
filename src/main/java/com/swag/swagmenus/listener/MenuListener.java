@@ -64,6 +64,22 @@ public class MenuListener implements Listener {
         MenuItem menuItem = findItemAtSlot(menu, slot);
         if (menuItem == null) return;
 
+        // A view_requirement only gates what's rendered (MenuManager substitutes deny_item,
+        // or leaves the slot to the fill item, when it isn't met) — it says nothing on its own
+        // about what should happen on click. Without this check, clicking the slot always ran
+        // the gated item's own commands regardless of whether the requirement passed, since
+        // findItemAtSlot() resolves purely by slot number. That let a player who fails the
+        // requirement (and so sees only a filler/deny item) still trigger the real item's
+        // commands — a permission-check bypass. Resolve to the deny_item (whose own commands/
+        // requirements apply) to match what's actually shown; with no deny_item, there's
+        // nothing valid to click.
+        if (!menuItem.isPlayerList() && menuItem.hasViewRequirement()
+                && !menuItem.getViewRequirement().isMet(player)) {
+            MenuItem denyItem = menuItem.getDenyItem();
+            if (denyItem == null) return;
+            menuItem = denyItem;
+        }
+
         if (isOnCooldown(player, slot)) return;
 
         ClickType clickType = event.getClick();

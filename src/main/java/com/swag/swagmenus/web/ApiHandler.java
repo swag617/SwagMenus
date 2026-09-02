@@ -233,20 +233,31 @@ public class ApiHandler implements HttpHandler {
      * stays YAML-only. Never touches menu YAML files, which live entirely under
      * {@code /api/menus}.
      */
-    private void handleGetConfig(HttpExchange exchange) throws IOException {
-        var cfg = plugin.getConfig();
+    private void handleGetConfig(HttpExchange exchange) {
+        // plugin.getConfig() returns the plugin's live, shared FileConfiguration — the same
+        // object other main-thread code (e.g. DebugLog) reads concurrently. This handler runs
+        // on SwagAPI's shared web server thread, not the main thread, so reading it here would
+        // be a main-thread-safety violation. Hop to the main thread like every other
+        // Bukkit-touching call in this file already does.
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            try {
+                var cfg = plugin.getConfig();
 
-        Map<String, Object> messages = new LinkedHashMap<>();
-        messages.put("no_permission", cfg.getString("messages.no_permission", ""));
-        messages.put("menu_not_found", cfg.getString("messages.menu_not_found", ""));
-        messages.put("player_not_found", cfg.getString("messages.player_not_found", ""));
+                Map<String, Object> messages = new LinkedHashMap<>();
+                messages.put("no_permission", cfg.getString("messages.no_permission", ""));
+                messages.put("menu_not_found", cfg.getString("messages.menu_not_found", ""));
+                messages.put("player_not_found", cfg.getString("messages.player_not_found", ""));
 
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("auto_reload_on_change", cfg.getBoolean("auto_reload_on_change", true));
-        result.put("default_update_interval", cfg.getInt("default_update_interval", 0));
-        result.put("debug", cfg.getBoolean("debug", false));
-        result.put("messages", messages);
-        sendJson(exchange, 200, result);
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("auto_reload_on_change", cfg.getBoolean("auto_reload_on_change", true));
+                result.put("default_update_interval", cfg.getInt("default_update_interval", 0));
+                result.put("debug", cfg.getBoolean("debug", false));
+                result.put("messages", messages);
+                sendJson(exchange, 200, result);
+            } catch (IOException e) {
+                LOG.warning("Failed to send config response: " + e.getMessage());
+            }
+        });
     }
 
     /**
@@ -269,32 +280,43 @@ public class ApiHandler implements HttpHandler {
             return;
         }
 
-        var cfg = plugin.getConfig();
+        // cfg.set()/saveConfig() touch the plugin's live, shared FileConfiguration — the same
+        // object other main-thread code (e.g. DebugLog) reads concurrently. This handler runs
+        // on SwagAPI's shared web server thread, not the main thread, so mutating it here would
+        // be a main-thread-safety violation. Hop to the main thread like every other
+        // Bukkit-touching call in this file already does.
+        org.bukkit.Bukkit.getScheduler().runTask(plugin, () -> {
+            try {
+                var cfg = plugin.getConfig();
 
-        if (json.has("auto_reload_on_change") && json.get("auto_reload_on_change").isJsonPrimitive()) {
-            cfg.set("auto_reload_on_change", json.get("auto_reload_on_change").getAsBoolean());
-        }
-        if (json.has("default_update_interval") && json.get("default_update_interval").isJsonPrimitive()) {
-            cfg.set("default_update_interval", json.get("default_update_interval").getAsInt());
-        }
-        if (json.has("debug") && json.get("debug").isJsonPrimitive()) {
-            cfg.set("debug", json.get("debug").getAsBoolean());
-        }
-        if (json.has("messages") && json.get("messages").isJsonObject()) {
-            JsonObject messages = json.getAsJsonObject("messages");
-            if (messages.has("no_permission") && messages.get("no_permission").isJsonPrimitive()) {
-                cfg.set("messages.no_permission", messages.get("no_permission").getAsString());
-            }
-            if (messages.has("menu_not_found") && messages.get("menu_not_found").isJsonPrimitive()) {
-                cfg.set("messages.menu_not_found", messages.get("menu_not_found").getAsString());
-            }
-            if (messages.has("player_not_found") && messages.get("player_not_found").isJsonPrimitive()) {
-                cfg.set("messages.player_not_found", messages.get("player_not_found").getAsString());
-            }
-        }
+                if (json.has("auto_reload_on_change") && json.get("auto_reload_on_change").isJsonPrimitive()) {
+                    cfg.set("auto_reload_on_change", json.get("auto_reload_on_change").getAsBoolean());
+                }
+                if (json.has("default_update_interval") && json.get("default_update_interval").isJsonPrimitive()) {
+                    cfg.set("default_update_interval", json.get("default_update_interval").getAsInt());
+                }
+                if (json.has("debug") && json.get("debug").isJsonPrimitive()) {
+                    cfg.set("debug", json.get("debug").getAsBoolean());
+                }
+                if (json.has("messages") && json.get("messages").isJsonObject()) {
+                    JsonObject messages = json.getAsJsonObject("messages");
+                    if (messages.has("no_permission") && messages.get("no_permission").isJsonPrimitive()) {
+                        cfg.set("messages.no_permission", messages.get("no_permission").getAsString());
+                    }
+                    if (messages.has("menu_not_found") && messages.get("menu_not_found").isJsonPrimitive()) {
+                        cfg.set("messages.menu_not_found", messages.get("menu_not_found").getAsString());
+                    }
+                    if (messages.has("player_not_found") && messages.get("player_not_found").isJsonPrimitive()) {
+                        cfg.set("messages.player_not_found", messages.get("player_not_found").getAsString());
+                    }
+                }
 
-        plugin.saveConfig();
-        sendJson(exchange, 200, mapOf("status", "saved"));
+                plugin.saveConfig();
+                sendJson(exchange, 200, mapOf("status", "saved"));
+            } catch (IOException e) {
+                LOG.warning("Failed to send save-config response: " + e.getMessage());
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")
